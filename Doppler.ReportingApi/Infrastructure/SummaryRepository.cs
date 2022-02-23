@@ -18,7 +18,7 @@ namespace Doppler.ReportingApi.Infrastructure
 
         public async Task<CampaignsSummary> GetCampaignsSummaryByUserAsync(string userName, DateTime startDate, DateTime endDate)
         {
-            using (var connection = await _connectionFactory.GetConnection())
+            using (var connection = _connectionFactory.GetConnection())
             {
                 var dummyDatabaseQuery = @"
                 SELECT
@@ -62,7 +62,7 @@ namespace Doppler.ReportingApi.Infrastructure
 
         public async Task<SubscribersSummary> GetSubscribersSummaryByUserAsync(string userName, DateTime startDate, DateTime endDate)
         {
-            using (var connection = await _connectionFactory.GetConnection())
+            using (var connection = _connectionFactory.GetConnection())
             {
                 var dummyDatabaseQuery = @"
                 SELECT
@@ -86,7 +86,7 @@ namespace Doppler.ReportingApi.Infrastructure
 
         public async Task<SystemUsageSummary> GetSystemUsageAsync(string accountName)
         {
-            using (var connection = await _connectionFactory.GetConnection())
+            using (var connection = _connectionFactory.GetConnection())
             {
                 var databaseQuery = @"
                 SELECT

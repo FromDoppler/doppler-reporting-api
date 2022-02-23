@@ -20,11 +20,6 @@ namespace Doppler.ReportingApi.Infrastructure
         /// Open new connection and return it for use
         /// </summary>
         /// <returns></returns>
-        public async Task<IDbConnection> GetConnection()
-        {
-            var cn = new SqlConnection(_connectionString);
-            await cn.OpenAsync();
-            return cn;
-        }
+        public IDbConnection GetConnection() => new SqlConnection(_connectionString);
     }
 }

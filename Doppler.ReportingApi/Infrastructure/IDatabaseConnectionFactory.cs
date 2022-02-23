@@ -5,6 +5,6 @@ namespace Doppler.ReportingApi.Infrastructure
 {
     public interface IDatabaseConnectionFactory
     {
-        Task<IDbConnection> GetConnection();
+        IDbConnection GetConnection();
     }
 }
