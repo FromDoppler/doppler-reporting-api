@@ -67,8 +67,8 @@ namespace Doppler.ReportingApi.Infrastructure
                 var dummyDatabaseQuery = @"
                 SELECT
                     (SELECT SUM(S.Amount) FROM ViewSubscribersByStatusXUserAmount S
-                     INNER JOIN [User] on [User].idUser = S.IdUser
-                     WHERE [User].Email = @userName AND S.IdSubscribersStatus <> 7) AS TotalSubscribers,
+                    INNER JOIN [User] on [User].idUser = S.IdUser
+                    WHERE [User].Email = @userName AND S.IdSubscribersStatus <> 7) AS TotalSubscribers,
                     COUNT(1) as NewSubscribers,
                     COUNT(CASE WHEN  S.IdSubscribersStatus = 8 THEN 1 END) AS RemovedSubscribers
                 FROM Subscriber S
