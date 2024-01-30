@@ -103,6 +103,8 @@ namespace Doppler.ReportingApi.Infrastructure
                         WHERE
                             DomainInformationXUser.IdDomainStatus = 2 AND
                             DomainInformationXUser.Active = 1 AND
+                            DomainInformationXUser.IdDomainDmarcStatus = 2 AND
+                            DomainInformationXUser.IdDomainKeyStatus = 2 AND
                             DomainInformationXUser.IdUser = [User].IdUser
                         ) DomainInfo
                 WHERE
