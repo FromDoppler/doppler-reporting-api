@@ -8,6 +8,7 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             services.AddScoped<IDatabaseConnectionFactory, DatabaseConnectionFactory>();
             services.AddScoped<ISummaryRepository, SummaryRepository>();
+            services.AddScoped<ICampaignRepository, CampaignRepository>();
             return services;
         }
     }
