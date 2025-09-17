@@ -10,6 +10,11 @@ namespace Doppler.ReportingApi.Models
         public DateTime Date { get; set; }
 
         /// <summary>
+        /// Total number Subscribers To Send
+        /// </summary>
+        public int Subscribers { get; set; }
+
+        /// <summary>
         /// Total number of emails sent on this date
         /// </summary>
         public int Sent { get; set; }
