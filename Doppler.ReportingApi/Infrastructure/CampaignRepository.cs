@@ -35,7 +35,7 @@ namespace Doppler.ReportingApi.Infrastructure
                     SELECT
                         C.[IdUser]
                         ,[IdCampaign]
-                        ,CAST(C.[UTCSentDate] AS DATE) [Date]
+                        ,CAST(C.[UTCScheduleDate] AS DATE) [Date]
                         ,ISNULL(C.[AmountSubscribersToSend],0) [Subscribers]
                         ,ISNULL(C.[AmountSentSubscribers],0) [Sent]
                         ,ISNULL(C.[DistinctOpenedMailCount],0) [Opens]
@@ -49,15 +49,15 @@ namespace Doppler.ReportingApi.Infrastructure
                         ON C.[IdUser] = U.[IdUser]
                     WHERE
                         U.[Email] = @userName
-                        AND C.[Status] = 5
-                        AND C.[UTCSentDate] BETWEEN @startDate AND @endDate
+                        AND C.[Status] IN (5,9,10)
+                        AND C.[UTCScheduleDate] BETWEEN @startDate AND @endDate
                         AND C.[IdTestCampaign] IS NULL
                         AND C.[IdScheduledTask] IS NULL
                     UNION ALL
                     SELECT
                         S.[IdUser]
                         ,S.[IdCampaign]
-                        ,CAST(C.[UTCSentDate] AS DATE) [Date]
+                        ,CAST(C.[UTCScheduleDate] AS DATE) [Date]
                         ,0 [Subscribers]
                         ,0 [Sent]
                         ,0 [Opens]
@@ -73,14 +73,14 @@ namespace Doppler.ReportingApi.Infrastructure
                         ON S.[IdUser] = U.[IdUser]
                     WHERE
                         U.[Email] = @userName
-                        AND C.[Status] = 5
-                        AND C.[UTCSentDate] BETWEEN @startDate AND @endDate
+                        AND C.[Status] IN (5,9,10)
+                        AND C.[UTCScheduleDate] BETWEEN @startDate AND @endDate
                         AND S.[IdSubscribersStatus] = 5
                         AND S.[IdUnsubscriptionReason] = 2
                     GROUP BY
                         S.[IdUser]
                         ,S.[IdCampaign]
-                        ,CAST(C.[UTCSentDate] AS DATE)
+                        ,CAST(C.[UTCScheduleDate] AS DATE)
                 ) AS RPT
                 GROUP BY
                         RPT.[IdUser],
