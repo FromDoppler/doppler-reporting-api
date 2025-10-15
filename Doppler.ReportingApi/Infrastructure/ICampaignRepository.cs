@@ -1,4 +1,5 @@
 using Doppler.ReportingApi.Models;
+using Doppler.ReportingApi.Models.Enums;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -9,8 +10,8 @@ namespace Doppler.ReportingApi.Infrastructure
     {
         Task<List<DailyCampaignMetrics>> GetDailyCampaignsMetrics(string userName, DateTime startDate, DateTime endDate);
 
-        Task<List<SentCampaignMetrics>> GetSentCampaignsMetrics(string userName, DateTime startDate, DateTime endDate, int pageNumber, int pageSize);
+        Task<List<SentCampaignMetrics>> GetSentCampaignsMetrics(string userName, int pageNumber, int pageSize, DateTime? startDate = null, DateTime? endDate = null, string campaignName = null, string campaignType = null, string fromEmail = null);
 
-        Task<int> GetSentCampaignsCount(string userName, DateTime startDate, DateTime endDate);
+        Task<int> GetSentCampaignsCount(string userName, DateTime? startDate = null, DateTime? endDate = null, string campaignName = null, string campaignType = null, string fromEmail = null);
     }
 }
