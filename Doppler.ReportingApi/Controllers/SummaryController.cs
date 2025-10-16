@@ -35,7 +35,7 @@ namespace Doppler.ReportingApi.Controllers
         [ProducesResponseType(typeof(CampaignsSummary), 200)]
         [Produces("application/json")]
         [Authorize(Policies.OWN_RESOURCE_OR_SUPERUSER)]
-        public async Task<IActionResult> GetCampaignsSummary(string accountName, [FromQuery] BasicDatefilter dateFilter)
+        public async Task<IActionResult> GetCampaignsSummary(string accountName, [FromQuery] BasicDateFilter dateFilter)
         {
             if (!dateFilter.StartDate.HasValue || !dateFilter.EndDate.HasValue)
             {
@@ -59,7 +59,7 @@ namespace Doppler.ReportingApi.Controllers
         [ProducesResponseType(typeof(SubscribersSummary), 200)]
         [Produces("application/json")]
         [Authorize(Policies.OWN_RESOURCE_OR_SUPERUSER)]
-        public async Task<IActionResult> GetSubscribers(string accountName, [FromQuery] BasicDatefilter dateFilter)
+        public async Task<IActionResult> GetSubscribers(string accountName, [FromQuery] BasicDateFilter dateFilter)
         {
             if (!dateFilter.StartDate.HasValue || !dateFilter.EndDate.HasValue)
             {

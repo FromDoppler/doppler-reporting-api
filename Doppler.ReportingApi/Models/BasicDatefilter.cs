@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Doppler.ReportingApi.Models
 {
-    public class BasicDatefilter
+    public class BasicDateFilter
     {
         public DateTimeOffset? StartDate { get; set; }
         public DateTimeOffset? EndDate { get; set; }

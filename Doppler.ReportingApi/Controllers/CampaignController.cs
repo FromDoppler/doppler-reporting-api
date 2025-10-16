@@ -4,6 +4,7 @@ using Doppler.ReportingApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Threading.Tasks;
 
 namespace Doppler.ReportingApi.Controllers
@@ -32,7 +33,7 @@ namespace Doppler.ReportingApi.Controllers
         [ProducesResponseType(typeof(DailyCampaignMetrics), 200)]
         [Produces("application/json")]
         [Authorize(Policies.OWN_RESOURCE_OR_SUPERUSER)]
-        public async Task<IActionResult> GetDailyCampaignsMetrics(string accountName, [FromQuery] BasicDatefilter dateFilter)
+        public async Task<IActionResult> GetDailyCampaignsMetrics(string accountName, [FromQuery] BasicDateFilter dateFilter)
         {
             if (!dateFilter.StartDate.HasValue || !dateFilter.EndDate.HasValue)
             {
@@ -54,30 +55,37 @@ namespace Doppler.ReportingApi.Controllers
         /// <param name="dateFilter">A basic date range filter, </param>
         /// <remarks>Dates must be valid UtcTime with timezone</remarks>
         /// <param name="pagingFilter">Pagination filter including page number and page size.</param>
+        /// <param name="campaignFilter">Filter object containing optional parameters such as campaign name, type, and from email.</param>
         [HttpGet]
         [Route("{accountName}/campaigns/metrics/sent")]
         [ProducesResponseType(typeof(BaseCollectionPage<SentCampaignMetrics>), 200)]
         [Produces("application/json")]
         [Authorize(Policies.OWN_RESOURCE_OR_SUPERUSER)]
-        public async Task<IActionResult> GetDailyCampaignsMetrics(string accountName, [FromQuery] BasicDatefilter dateFilter, [FromQuery] BasicPagingFilter pagingFilter)
+        public async Task<IActionResult> GetDailyCampaignsMetrics(string accountName, [FromQuery] BasicPagingFilter pagingFilter, [FromQuery] BasicDateFilter dateFilter, [FromQuery] BasicCampaignFilter campaignFilter)
         {
-            if (!dateFilter.StartDate.HasValue || !dateFilter.EndDate.HasValue)
-                return new BadRequestObjectResult("StartDate and EndDate are required fields");
+            DateTime? startDate = dateFilter.StartDate.HasValue ? dateFilter.StartDate.Value.UtcDateTime : null;
+            DateTime? endDate = dateFilter.EndDate.HasValue ? dateFilter.EndDate.Value.UtcDateTime : null;
+            string campaignType = campaignFilter.CampaignType.HasValue ? campaignFilter.CampaignType.ToString() : null;
 
-            if (pagingFilter == null)
-                return new BadRequestObjectResult("Pagination parameters are required fields");
-
-            var startDate = dateFilter.StartDate.Value.UtcDateTime;
-            var endDate = dateFilter.EndDate.Value.UtcDateTime;
-
-            var totalCount = await _campaignRepository.GetSentCampaignsCount(accountName, startDate, endDate);
-
-            var items = await _campaignRepository.GetSentCampaignsMetrics(
+            var totalCount = await _campaignRepository.GetSentCampaignsCount(
                 accountName,
                 startDate,
                 endDate,
+                campaignFilter.CampaignName,
+                campaignType,
+                campaignFilter.FromEmail
+                );
+
+            var items = await _campaignRepository.GetSentCampaignsMetrics(
+                accountName,
                 pagingFilter.PageNumber,
-                pagingFilter.PageSize);
+                pagingFilter.PageSize,
+                startDate,
+                endDate,
+                campaignFilter.CampaignName,
+                campaignType,
+                campaignFilter.FromEmail
+                );
 
             var pagedResult = new BaseCollectionPage<SentCampaignMetrics>
             {

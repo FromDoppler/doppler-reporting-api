@@ -1,5 +1,6 @@
 using Dapper;
 using Doppler.ReportingApi.Models;
+using Doppler.ReportingApi.Models.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -91,7 +92,7 @@ namespace Doppler.ReportingApi.Infrastructure
             }
         }
 
-        public async Task<List<SentCampaignMetrics>> GetSentCampaignsMetrics(string userName, DateTime startDate, DateTime endDate, int pageNumber, int pageSize)
+        public async Task<List<SentCampaignMetrics>> GetSentCampaignsMetrics(string userName, int pageNumber, int pageSize, DateTime? startDate = null, DateTime? endDate = null, string campaignName = null, string campaignType = null, string fromEmail = null)
         {
             using (var connection = _connectionFactory.GetConnection())
             {
@@ -160,8 +161,12 @@ namespace Doppler.ReportingApi.Infrastructure
                         ON C.[IdUser] = U.[IdUser]
                     WHERE
                         U.[Email] = @userName
-                        AND C.[Status] IN (5,9,10)
-                        AND C.[UTCScheduleDate] BETWEEN @startDate AND @endDate
+                        AND C.[Status] IN (5,9)
+                        AND (@startDate IS NULL OR C.[UTCScheduleDate] >= @startDate)
+                        AND (@endDate IS NULL OR C.[UTCScheduleDate] <= @endDate)
+                        AND (@campaignName IS NULL OR LOWER(LTRIM(RTRIM(C.[Name]))) LIKE '%' + LOWER(LTRIM(RTRIM(@campaignName))) + '%')
+                        AND (@campaignType IS NULL OR C.[CampaignType] LIKE @campaignType)
+                        AND (@fromEmail IS NULL OR LOWER(LTRIM(RTRIM(C.[FromEmail]))) LIKE LOWER(LTRIM(RTRIM(@fromEmail))))
                         AND C.[IdTestCampaign] IS NULL
                         AND C.[IdScheduledTask] IS NULL
                     UNION ALL
@@ -187,10 +192,14 @@ namespace Doppler.ReportingApi.Infrastructure
                         ON S.[IdUser] = U.[IdUser]
                     WHERE
                         U.[Email] = @userName
-                        AND C.[Status] IN (5,9,10)
-                        AND C.[UTCScheduleDate] BETWEEN @startDate AND @endDate
-                        AND S.[IdSubscribersStatus] = 5
-                        AND S.[IdUnsubscriptionReason] = 2
+                        AND C.[Status] IN (5,9)
+                        AND (@startDate IS NULL OR C.[UTCScheduleDate] >= @startDate)
+                        AND (@endDate IS NULL OR C.[UTCScheduleDate] <= @endDate)
+                        AND (@campaignName IS NULL OR LOWER(LTRIM(RTRIM(C.[Name]))) LIKE '%' + LOWER(LTRIM(RTRIM(@campaignName))) + '%')
+                        AND (@campaignType IS NULL OR C.[CampaignType] LIKE @campaignType)
+                        AND (@fromEmail IS NULL OR LOWER(LTRIM(RTRIM(C.[FromEmail]))) LIKE LOWER(LTRIM(RTRIM(@fromEmail))))
+                        AND C.[IdTestCampaign] IS NULL
+                        AND C.[IdScheduledTask] IS NULL
                     GROUP BY
                         S.[IdUser]
                         ,S.[IdCampaign]
@@ -209,13 +218,13 @@ namespace Doppler.ReportingApi.Infrastructure
                 OFFSET @pageNumber * @PageSize ROWS
                 FETCH NEXT @pageSize ROWS ONLY";
 
-                var results = await connection.QueryAsync<SentCampaignMetrics>(dummyDatabaseQuery, new { userName, startDate, endDate, pageNumber, pageSize });
+                var results = await connection.QueryAsync<SentCampaignMetrics>(dummyDatabaseQuery, new { userName, pageNumber, pageSize, startDate, endDate, campaignName, campaignType, fromEmail });
 
                 return results.ToList();
             }
         }
 
-        public async Task<int> GetSentCampaignsCount(string userName, DateTime startDate, DateTime endDate)
+        public async Task<int> GetSentCampaignsCount(string userName, DateTime? startDate = null, DateTime? endDate = null, string campaignName = null, string campaignType = null, string fromEmail = null)
         {
             using (var connection = _connectionFactory.GetConnection())
             {
@@ -226,12 +235,16 @@ namespace Doppler.ReportingApi.Infrastructure
                     ON C.[IdUser] = U.[IdUser]
                 WHERE
                     U.[Email] = @userName
-                    AND C.[Status] IN (5,9,10)
-                    AND C.[UTCScheduleDate] BETWEEN @startDate AND @endDate
+                    AND C.[Status] IN (5,9)
+                    AND (@startDate IS NULL OR C.[UTCScheduleDate] >= @startDate)
+                    AND (@endDate IS NULL OR C.[UTCScheduleDate] <= @endDate)
+                    AND (@campaignName IS NULL OR LOWER(LTRIM(RTRIM(C.[Name]))) LIKE '%' + LOWER(LTRIM(RTRIM(@campaignName))) + '%')
+                    AND (@campaignType IS NULL OR C.[CampaignType] LIKE @campaignType)
+                    AND (@fromEmail IS NULL OR LOWER(LTRIM(RTRIM(C.[FromEmail]))) LIKE LOWER(LTRIM(RTRIM(@fromEmail))))
                     AND C.[IdTestCampaign] IS NULL
                     AND C.[IdScheduledTask] IS NULL";
 
-                var count = await connection.QuerySingleAsync<int>(dummyDatabaseQuery, new { userName, startDate, endDate });
+                var count = await connection.QuerySingleAsync<int>(dummyDatabaseQuery, new { userName, startDate, endDate, campaignName, campaignType, fromEmail });
 
                 return count;
             }
