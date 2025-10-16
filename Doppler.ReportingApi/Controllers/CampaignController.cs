@@ -97,5 +97,48 @@ namespace Doppler.ReportingApi.Controllers
 
             return new OkObjectResult(pagedResult);
         }
+
+        /// <summary>
+        /// Return an object summarizing the sent campaingns performance of an user
+        /// </summary>
+        /// <param name="accountName">User name</param>
+        /// <param name="dateFilter">A basic date range filter, </param>
+        /// <remarks>Dates must be valid UtcTime with timezone</remarks>
+        /// <param name="pagingFilter">Pagination filter including page number and page size.</param>
+
+        [HttpGet]
+        [Route("{accountName}/campaigns/metrics/monthly")]
+        [ProducesResponseType(typeof(BaseCollectionPage<MonthlyCampaignMetrics>), 200)]
+        [Produces("application/json")]
+        [Authorize(Policies.OWN_RESOURCE_OR_SUPERUSER)]
+        public async Task<IActionResult> GetMonthlyCampaignsMetrics(string accountName, [FromQuery] BasicPagingFilter pagingFilter, [FromQuery] BasicDateFilter dateFilter)
+        {
+            DateTime? startDate = dateFilter.StartDate.HasValue ? dateFilter.StartDate.Value.UtcDateTime : null;
+            DateTime? endDate = dateFilter.EndDate.HasValue ? dateFilter.EndDate.Value.UtcDateTime : null;
+
+            var totalCount = await _campaignRepository.GetMonthlyCampaignsCount(
+                accountName,
+                startDate,
+                endDate
+                );
+
+            var items = await _campaignRepository.GetMonthlyCampaignsMetrics(
+                accountName,
+                pagingFilter.PageNumber,
+                pagingFilter.PageSize,
+                startDate,
+                endDate
+                );
+
+            var pagedResult = new BaseCollectionPage<MonthlyCampaignMetrics>
+            {
+                Items = items,
+                CurrentPage = pagingFilter.PageNumber,
+                PageSize = pagingFilter.PageSize,
+                ItemsCount = totalCount
+            };
+
+            return new OkObjectResult(pagedResult);
+        }
     }
 }
