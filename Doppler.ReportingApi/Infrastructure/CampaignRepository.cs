@@ -42,7 +42,11 @@ namespace Doppler.ReportingApi.Infrastructure
                         ,ISNULL(C.[DistinctClickCount],0) [Clicks]
                         ,ISNULL(C.[HardBouncedMailCount],0) [Hard]
                         ,ISNULL (C.[SoftBouncedMailCount],0) [Soft]
-                        ,ISNULL(C.[UnsubscriptionsCount],0) [Unsubscribes]
+                        ,(CASE C.[Status]
+                            WHEN 9
+                                THEN ISNULL(C.[UnsubscriptionsCount],0)
+                            ELSE 0
+                            END) [Unsubscribes]
                         ,0 [Spam]
                     FROM [dbo].[Campaign] C WITH (NOLOCK)
                     JOIN [dbo].[User] U WITH (NOLOCK)
@@ -64,8 +68,20 @@ namespace Doppler.ReportingApi.Infrastructure
                         ,0 [Clicks]
                         ,0 [Hard]
                         ,0 [Soft]
-                        ,0 [Unsubscribes]
-                        ,COUNT(1) [Spam]
+                        ,COUNT(CASE
+                            WHEN IdUnsubscriptionReason <> 2 AND UnsubscriptionSubreason NOT IN (2,3,4) AND C.[Status] IN (5,10)
+                                THEN 1
+                            END) [Unsubscribes]
+                        ,COUNT(CASE
+                            WHEN IdUnsubscriptionReason = 2
+                                THEN 1
+                            WHEN UnsubscriptionSubreason IN (
+                                    2
+                                    ,3
+                                    ,4
+                                    )
+                                THEN 1
+                            END) [Spam]
                     FROM [dbo].[Subscriber] S WITH (NOLOCK)
                     JOIN [dbo].[Campaign] C WITH (NOLOCK)
                         ON S.[IdUser] = S.[IdUser] AND S.[IdCampaign] = C.[IdCampaign]
@@ -76,7 +92,6 @@ namespace Doppler.ReportingApi.Infrastructure
                         AND C.[Status] IN (5,9,10)
                         AND C.[UTCScheduleDate] BETWEEN @startDate AND @endDate
                         AND S.[IdSubscribersStatus] = 5
-                        AND S.[IdUnsubscriptionReason] = 2
                     GROUP BY
                         S.[IdUser]
                         ,S.[IdCampaign]
