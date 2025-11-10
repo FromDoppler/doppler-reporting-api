@@ -130,37 +130,37 @@ namespace Doppler.ReportingApi.Infrastructure
                     ,SUM(RPT.[Sent]) [Sent]
                     ,CASE
                         WHEN SUM(RPT.[Subscribers]) = 0 THEN 0
-                        ELSE CAST(SUM(RPT.[Sent]) * 100.0 / SUM(RPT.[Subscribers]) AS DECIMAL(5,2))
+                        ELSE CAST(SUM(RPT.[Sent]) * 100.0 / SUM(RPT.[Subscribers]) AS DECIMAL(10,2))
                     END AS [DlvRate]
                     ,SUM(RPT.[Opens]) [Opens]
                     ,CASE
                         WHEN SUM(RPT.[Sent]) = 0 THEN 0
-                        ELSE CAST(SUM(RPT.[Opens]) * 100.0 / SUM(RPT.[Sent]) AS DECIMAL(5,2))
+                        ELSE CAST(SUM(RPT.[Opens]) * 100.0 / SUM(RPT.[Sent]) AS DECIMAL(10,2))
                     END AS [OpenRate]
                     ,SUM(RPT.[Sent]) - SUM(RPT.[Opens]) AS [Unopens]
                     ,CASE
                         WHEN SUM(RPT.[Sent]) = 0 THEN 0
-                        ELSE CAST(SUM(RPT.[Sent] - RPT.[Opens]) * 100.0 / SUM(RPT.[Sent]) AS DECIMAL(5,2))
+                        ELSE CAST(SUM(RPT.[Sent] - RPT.[Opens]) * 100.0 / SUM(RPT.[Sent]) AS DECIMAL(10,2))
                     END AS [UnopenRate]
                     ,SUM(RPT.[Clicks]) [Clicks]
                     ,CASE
                         WHEN SUM(RPT.[Opens]) = 0 THEN 0
-                        ELSE CAST(SUM(RPT.[Clicks]) * 100.0 / SUM(RPT.[Opens]) AS DECIMAL(5,2))
+                        ELSE CAST(SUM(RPT.[Clicks]) * 100.0 / SUM(RPT.[Opens]) AS DECIMAL(10,2))
                     END AS [ClickToOpenRate]
                     ,SUM(RPT.[Hard] + RPT.[Soft]) [Bounces]
                     ,CASE
                         WHEN SUM(RPT.[Subscribers]) = 0 THEN 0
-                        ELSE CAST(SUM(RPT.[Hard] + RPT.[Soft]) * 100.0 / SUM(RPT.[Subscribers]) AS DECIMAL(5,2))
+                        ELSE CAST(SUM(RPT.[Hard] + RPT.[Soft]) * 100.0 / SUM(RPT.[Subscribers]) AS DECIMAL(10,2))
                     END AS [BounceRate]
                     ,SUM(RPT.[Unsubscribes]) [Unsubscribes]
                     ,CASE
                         WHEN SUM(RPT.[Sent]) = 0 THEN 0
-                        ELSE CAST(SUM(RPT.[Unsubscribes]) * 100.0 / SUM(RPT.[Sent]) AS DECIMAL(5,2))
+                        ELSE CAST(SUM(RPT.[Unsubscribes]) * 100.0 / SUM(RPT.[Sent]) AS DECIMAL(10,2))
                     END AS [UnsubscribeRate]
                     ,SUM(RPT.[Spam]) [Spam]
                     ,CASE
                         WHEN SUM(RPT.[Sent]) = 0 THEN 0
-                        ELSE CAST(SUM(RPT.[Spam]) * 100.0 / SUM(RPT.[Sent]) AS DECIMAL(5,2))
+                        ELSE CAST(SUM(RPT.[Spam]) * 100.0 / SUM(RPT.[Sent]) AS DECIMAL(10,2))
                     END AS [SpamRate]
                 FROM(
                     SELECT
