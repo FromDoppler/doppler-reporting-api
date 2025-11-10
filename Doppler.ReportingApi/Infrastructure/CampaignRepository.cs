@@ -112,48 +112,55 @@ namespace Doppler.ReportingApi.Infrastructure
             using (var connection = _connectionFactory.GetConnection())
             {
                 var dummyDatabaseQuery = @"
+                DECLARE @timezone INT
+
+                SELECT @timezone = offset
+                FROM dbo.usertimezone timezone
+                INNER JOIN dbo.[user] u ON u.idusertimezone = timezone.idusertimezone
+                WHERE u.[Email] = @userName
+
                 SELECT
                     RPT.[IdUser]
                     ,RPT.[IdCampaign]
                     ,RPT.[Name]
-                    ,RPT.[UTCScheduleDate]
+                    ,(convert(VARCHAR(16), dateadd(MINUTE, @timezone, RPT.[UTCScheduleDate]), 103) + ' ' + convert(VARCHAR(5), dateadd(MINUTE, @timezone, RPT.[UTCScheduleDate]), 114)) AS [UTCScheduleDate]
                     ,RPT.[FromEmail]
                     ,RPT.[CampaignType]
                     ,SUM(RPT.[Subscribers]) [Subscribers]
                     ,SUM(RPT.[Sent]) [Sent]
                     ,CASE
                         WHEN SUM(RPT.[Subscribers]) = 0 THEN 0
-                        ELSE CAST(SUM(RPT.[Sent]) * 100.0 / SUM(RPT.[Subscribers]) AS DECIMAL(5,2))
+                        ELSE CAST(SUM(RPT.[Sent]) * 100.0 / SUM(RPT.[Subscribers]) AS DECIMAL(10,2))
                     END AS [DlvRate]
                     ,SUM(RPT.[Opens]) [Opens]
                     ,CASE
                         WHEN SUM(RPT.[Sent]) = 0 THEN 0
-                        ELSE CAST(SUM(RPT.[Opens]) * 100.0 / SUM(RPT.[Sent]) AS DECIMAL(5,2))
+                        ELSE CAST(SUM(RPT.[Opens]) * 100.0 / SUM(RPT.[Sent]) AS DECIMAL(10,2))
                     END AS [OpenRate]
                     ,SUM(RPT.[Sent]) - SUM(RPT.[Opens]) AS [Unopens]
                     ,CASE
                         WHEN SUM(RPT.[Sent]) = 0 THEN 0
-                        ELSE CAST(SUM(RPT.[Sent] - RPT.[Opens]) * 100.0 / SUM(RPT.[Sent]) AS DECIMAL(5,2))
+                        ELSE CAST(SUM(RPT.[Sent] - RPT.[Opens]) * 100.0 / SUM(RPT.[Sent]) AS DECIMAL(10,2))
                     END AS [UnopenRate]
                     ,SUM(RPT.[Clicks]) [Clicks]
                     ,CASE
                         WHEN SUM(RPT.[Opens]) = 0 THEN 0
-                        ELSE CAST(SUM(RPT.[Clicks]) * 100.0 / SUM(RPT.[Opens]) AS DECIMAL(5,2))
+                        ELSE CAST(SUM(RPT.[Clicks]) * 100.0 / SUM(RPT.[Opens]) AS DECIMAL(10,2))
                     END AS [ClickToOpenRate]
                     ,SUM(RPT.[Hard] + RPT.[Soft]) [Bounces]
                     ,CASE
                         WHEN SUM(RPT.[Subscribers]) = 0 THEN 0
-                        ELSE CAST(SUM(RPT.[Hard] + RPT.[Soft]) * 100.0 / SUM(RPT.[Subscribers]) AS DECIMAL(5,2))
+                        ELSE CAST(SUM(RPT.[Hard] + RPT.[Soft]) * 100.0 / SUM(RPT.[Subscribers]) AS DECIMAL(10,2))
                     END AS [BounceRate]
                     ,SUM(RPT.[Unsubscribes]) [Unsubscribes]
                     ,CASE
                         WHEN SUM(RPT.[Sent]) = 0 THEN 0
-                        ELSE CAST(SUM(RPT.[Unsubscribes]) * 100.0 / SUM(RPT.[Sent]) AS DECIMAL(5,2))
+                        ELSE CAST(SUM(RPT.[Unsubscribes]) * 100.0 / SUM(RPT.[Sent]) AS DECIMAL(10,2))
                     END AS [UnsubscribeRate]
                     ,SUM(RPT.[Spam]) [Spam]
                     ,CASE
                         WHEN SUM(RPT.[Sent]) = 0 THEN 0
-                        ELSE CAST(SUM(RPT.[Spam]) * 100.0 / SUM(RPT.[Sent]) AS DECIMAL(5,2))
+                        ELSE CAST(SUM(RPT.[Spam]) * 100.0 / SUM(RPT.[Sent]) AS DECIMAL(10,2))
                     END AS [SpamRate]
                 FROM(
                     SELECT
@@ -177,6 +184,7 @@ namespace Doppler.ReportingApi.Infrastructure
                     WHERE
                         U.[Email] = @userName
                         AND C.[Status] IN (5,9)
+                        AND C.Active = 1
                         AND (@startDate IS NULL OR C.[UTCScheduleDate] >= @startDate)
                         AND (@endDate IS NULL OR C.[UTCScheduleDate] <= @endDate)
                         AND (@campaignName IS NULL OR LOWER(LTRIM(RTRIM(C.[Name]))) LIKE '%' + LOWER(LTRIM(RTRIM(@campaignName))) + '%')
@@ -184,6 +192,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         AND (@fromEmail IS NULL OR LOWER(LTRIM(RTRIM(C.[FromEmail]))) LIKE LOWER(LTRIM(RTRIM(@fromEmail))))
                         AND C.[IdTestCampaign] IS NULL
                         AND C.[IdScheduledTask] IS NULL
+                        AND (c.TestABCategory IS NULL OR c.TestABCategory = 3)
                     UNION ALL
                     SELECT
                         S.[IdUser]
@@ -208,6 +217,7 @@ namespace Doppler.ReportingApi.Infrastructure
                     WHERE
                         U.[Email] = @userName
                         AND C.[Status] IN (5,9)
+                        AND C.Active = 1
                         AND (@startDate IS NULL OR C.[UTCScheduleDate] >= @startDate)
                         AND (@endDate IS NULL OR C.[UTCScheduleDate] <= @endDate)
                         AND (@campaignName IS NULL OR LOWER(LTRIM(RTRIM(C.[Name]))) LIKE '%' + LOWER(LTRIM(RTRIM(@campaignName))) + '%')
@@ -215,6 +225,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         AND (@fromEmail IS NULL OR LOWER(LTRIM(RTRIM(C.[FromEmail]))) LIKE LOWER(LTRIM(RTRIM(@fromEmail))))
                         AND C.[IdTestCampaign] IS NULL
                         AND C.[IdScheduledTask] IS NULL
+                        AND (c.TestABCategory IS NULL OR c.TestABCategory = 3)
                     GROUP BY
                         S.[IdUser]
                         ,S.[IdCampaign]
@@ -251,13 +262,15 @@ namespace Doppler.ReportingApi.Infrastructure
                 WHERE
                     U.[Email] = @userName
                     AND C.[Status] IN (5,9)
+                    AND C.Active = 1
                     AND (@startDate IS NULL OR C.[UTCScheduleDate] >= @startDate)
                     AND (@endDate IS NULL OR C.[UTCScheduleDate] <= @endDate)
                     AND (@campaignName IS NULL OR LOWER(LTRIM(RTRIM(C.[Name]))) LIKE '%' + LOWER(LTRIM(RTRIM(@campaignName))) + '%')
                     AND (@campaignType IS NULL OR C.[CampaignType] LIKE @campaignType)
                     AND (@fromEmail IS NULL OR LOWER(LTRIM(RTRIM(C.[FromEmail]))) LIKE LOWER(LTRIM(RTRIM(@fromEmail))))
                     AND C.[IdTestCampaign] IS NULL
-                    AND C.[IdScheduledTask] IS NULL";
+                    AND C.[IdScheduledTask] IS NULL
+                    AND (c.TestABCategory IS NULL OR c.TestABCategory = 3)";
 
                 var count = await connection.QuerySingleAsync<int>(dummyDatabaseQuery, new { userName, startDate, endDate, campaignName, campaignType, fromEmail });
 
@@ -270,10 +283,17 @@ namespace Doppler.ReportingApi.Infrastructure
             using (var connection = _connectionFactory.GetConnection())
             {
                 var dummyDatabaseQuery = @"
+                DECLARE @timezone INT
+
+                SELECT @timezone = offset
+                FROM dbo.usertimezone timezone
+                INNER JOIN dbo.[user] u ON u.idusertimezone = timezone.idusertimezone
+                WHERE u.[Email] = @userName
+
                 SELECT
                     RPT.[IdUser]
-                    ,YEAR(UTCScheduleDate) [Year]
-                    ,MONTH(UTCScheduleDate) [Month]
+                    ,YEAR(dateadd(MINUTE, @timezone, UTCScheduleDate)) [Year]
+                    ,MONTH(dateadd(MINUTE, @timezone, UTCScheduleDate)) [Month]
                     ,COUNT(RPT.[IdCampaign]) [CampaginsCount]
                     ,SUM(RPT.[Subscribers]) [Subscribers]
                     ,SUM(RPT.[Sent]) [Sent]
@@ -330,10 +350,12 @@ namespace Doppler.ReportingApi.Infrastructure
                     WHERE
                         U.[Email] = @userName
                         AND C.[Status] IN (5,9)
+                        AND C.Active = 1
                         AND (@startDate IS NULL OR C.[UTCScheduleDate] >= @startDate)
                         AND (@endDate IS NULL OR C.[UTCScheduleDate] < @endDate)
                         AND C.[IdTestCampaign] IS NULL
                         AND C.[IdScheduledTask] IS NULL
+                        AND (c.TestABCategory IS NULL OR c.TestABCategory = 3)
                     UNION ALL
                     SELECT
                         S.[IdUser]
@@ -355,10 +377,12 @@ namespace Doppler.ReportingApi.Infrastructure
                     WHERE
                         U.[Email] = @userName
                         AND C.[Status] IN (5,9)
+                        AND C.Active = 1
                         AND (@startDate IS NULL OR C.[UTCScheduleDate] >= @startDate)
                         AND (@endDate IS NULL OR C.[UTCScheduleDate] < @endDate)
                         AND C.[IdTestCampaign] IS NULL
                         AND C.[IdScheduledTask] IS NULL
+                        AND (c.TestABCategory IS NULL OR c.TestABCategory = 3)
                     GROUP BY
                         S.[IdUser]
                         ,S.[IdCampaign]
@@ -368,10 +392,10 @@ namespace Doppler.ReportingApi.Infrastructure
                         ,C.[CampaignType]
                 ) RPT
                 GROUP BY RPT.[IdUser]
-                        ,YEAR(RPT.UTCScheduleDate)
-                        ,MONTH(RPT.UTCScheduleDate)
+                        ,YEAR(dateadd(MINUTE, @timezone, UTCScheduleDate))
+                        ,MONTH(dateadd(MINUTE, @timezone, UTCScheduleDate))
 
-                ORDER BY YEAR(RPT.UTCScheduleDate) DESC, MONTH(RPT.UTCScheduleDate) DESC
+                ORDER BY [Year] DESC, [Month] DESC
                 OFFSET @pageNumber * @PageSize ROWS
                 FETCH NEXT @pageSize ROWS ONLY";
 
@@ -398,10 +422,12 @@ namespace Doppler.ReportingApi.Infrastructure
                     WHERE
                         U.[Email] = @userName
                         AND C.[Status] IN (5,9)
+                        AND C.Active = 1
                         AND (@startDate IS NULL OR C.[UTCScheduleDate] >= @startDate)
                         AND (@endDate IS NULL OR C.[UTCScheduleDate] < @endDate)
                         AND C.[IdTestCampaign] IS NULL
                         AND C.[IdScheduledTask] IS NULL
+                        AND (c.TestABCategory IS NULL OR c.TestABCategory = 3)
                     GROUP BY
                         C.[IdUser],
                         YEAR(C.[UTCScheduleDate]),
