@@ -112,11 +112,18 @@ namespace Doppler.ReportingApi.Infrastructure
             using (var connection = _connectionFactory.GetConnection())
             {
                 var dummyDatabaseQuery = @"
+                DECLARE @timezone INT
+
+                SELECT @timezone = offset
+                FROM dbo.usertimezone timezone
+                INNER JOIN dbo.[user] u ON u.idusertimezone = timezone.idusertimezone
+                WHERE u.[Email] = @userName
+
                 SELECT
                     RPT.[IdUser]
                     ,RPT.[IdCampaign]
                     ,RPT.[Name]
-                    ,RPT.[UTCScheduleDate]
+                    ,(convert(VARCHAR(16), dateadd(MINUTE, @timezone, RPT.[UTCScheduleDate]), 103) + ' ' + convert(VARCHAR(5), dateadd(MINUTE, @timezone, RPT.[UTCScheduleDate]), 114)) AS [UTCScheduleDate]
                     ,RPT.[FromEmail]
                     ,RPT.[CampaignType]
                     ,SUM(RPT.[Subscribers]) [Subscribers]
@@ -270,10 +277,17 @@ namespace Doppler.ReportingApi.Infrastructure
             using (var connection = _connectionFactory.GetConnection())
             {
                 var dummyDatabaseQuery = @"
+                DECLARE @timezone INT
+
+                SELECT @timezone = offset
+                FROM dbo.usertimezone timezone
+                INNER JOIN dbo.[user] u ON u.idusertimezone = timezone.idusertimezone
+                WHERE u.[Email] = @userName
+                
                 SELECT
                     RPT.[IdUser]
-                    ,YEAR(UTCScheduleDate) [Year]
-                    ,MONTH(UTCScheduleDate) [Month]
+                    ,YEAR(dateadd(MINUTE, @timezone, UTCScheduleDate)) [Year]
+                    ,MONTH(dateadd(MINUTE, @timezone, UTCScheduleDate)) [Month]
                     ,COUNT(RPT.[IdCampaign]) [CampaginsCount]
                     ,SUM(RPT.[Subscribers]) [Subscribers]
                     ,SUM(RPT.[Sent]) [Sent]
@@ -368,10 +382,10 @@ namespace Doppler.ReportingApi.Infrastructure
                         ,C.[CampaignType]
                 ) RPT
                 GROUP BY RPT.[IdUser]
-                        ,YEAR(RPT.UTCScheduleDate)
-                        ,MONTH(RPT.UTCScheduleDate)
+                        ,YEAR(dateadd(MINUTE, @timezone, UTCScheduleDate))
+                        ,MONTH(dateadd(MINUTE, @timezone, UTCScheduleDate))
 
-                ORDER BY YEAR(RPT.UTCScheduleDate) DESC, MONTH(RPT.UTCScheduleDate) DESC
+                ORDER BY [Year] DESC, [Month] DESC
                 OFFSET @pageNumber * @PageSize ROWS
                 FETCH NEXT @pageSize ROWS ONLY";
 
