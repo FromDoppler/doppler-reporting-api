@@ -183,8 +183,8 @@ namespace Doppler.ReportingApi.Infrastructure
                     FROM [dbo].[Campaign] C WITH (NOLOCK)
                     JOIN [dbo].[User] U WITH (NOLOCK)
                         ON C.[IdUser] = U.[IdUser]
-	                LEFT JOIN [dbo].[Label] L WITH (NOLOCK)
-		                ON C.[IdLabel] = L.[IdLabel]
+                    LEFT JOIN [dbo].[Label] L WITH (NOLOCK)
+                        ON C.[IdLabel] = L.[IdLabel]
                     WHERE
                         U.[Email] = @userName
                         AND C.[Status] IN (5,9)
@@ -219,8 +219,8 @@ namespace Doppler.ReportingApi.Infrastructure
                         ON S.[IdUser] = S.[IdUser] AND S.[IdCampaign] = C.[IdCampaign]
                     JOIN [dbo].[User] U WITH (NOLOCK)
                         ON S.[IdUser] = U.[IdUser]
-	                LEFT JOIN [dbo].[Label] L WITH (NOLOCK)
-		                ON C.[IdLabel] = L.[IdLabel]
+                    LEFT JOIN [dbo].[Label] L WITH (NOLOCK)
+                        ON C.[IdLabel] = L.[IdLabel]
                     WHERE
                         U.[Email] = @userName
                         AND C.[Status] IN (5,9)
@@ -240,7 +240,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         ,C.[UTCScheduleDate]
                         ,C.[FromEmail]
                         ,C.[CampaignType]
-		                ,L.[Name]
+                        ,L.[Name]
                 ) RPT
                 GROUP BY RPT.[IdUser]
                         ,RPT.[IdCampaign]
@@ -248,7 +248,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         ,RPT.[UTCScheduleDate]
                         ,RPT.[FromEmail]
                         ,RPT.[CampaignType]
-		                ,RPT.[LabelName]
+                        ,RPT.[LabelName]
                 ORDER BY RPT.[UTCScheduleDate] DESC
                 OFFSET @pageNumber * @PageSize ROWS
                 FETCH NEXT @pageSize ROWS ONLY";
