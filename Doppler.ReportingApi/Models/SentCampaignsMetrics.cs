@@ -109,5 +109,10 @@ namespace Doppler.ReportingApi.Models
         /// Spam complaint rate percentage (spam / sent * 100).
         /// </summary>
         public decimal SpamRate { get; set; }
+
+        /// <summary>
+        /// Label Campaign
+        /// </summary>
+        public string LabelName { get; set }
     }
 }
