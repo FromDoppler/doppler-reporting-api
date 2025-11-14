@@ -113,6 +113,6 @@ namespace Doppler.ReportingApi.Models
         /// <summary>
         /// Label Campaign
         /// </summary>
-        public string LabelName { get; set }
+        public string LabelName { get; set; }
     }
 }
