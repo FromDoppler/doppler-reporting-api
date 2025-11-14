@@ -162,6 +162,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         WHEN SUM(RPT.[Sent]) = 0 THEN 0
                         ELSE CAST(SUM(RPT.[Spam]) * 100.0 / SUM(RPT.[Sent]) AS DECIMAL(10,2))
                     END AS [SpamRate]
+                    ,RPT.[LabelName]
                 FROM(
                     SELECT
                         C.[IdUser]
@@ -178,9 +179,12 @@ namespace Doppler.ReportingApi.Infrastructure
                         ,ISNULL (C.[SoftBouncedMailCount],0) [Soft]
                         ,ISNULL(C.[UnsubscriptionsCount],0) [Unsubscribes]
                         ,0 [Spam]
+                        ,L.[Name] [LabelName]
                     FROM [dbo].[Campaign] C WITH (NOLOCK)
                     JOIN [dbo].[User] U WITH (NOLOCK)
                         ON C.[IdUser] = U.[IdUser]
+	                LEFT JOIN [dbo].[Label] L WITH (NOLOCK)
+		                ON C.[IdLabel] = L.[IdLabel]
                     WHERE
                         U.[Email] = @userName
                         AND C.[Status] IN (5,9)
@@ -209,11 +213,14 @@ namespace Doppler.ReportingApi.Infrastructure
                         ,0 [Soft]
                         ,0 [Unsubscribes]
                         ,COUNT(1) [Spam]
+                        ,L.[Name] [LabelName]
                     FROM [dbo].[Subscriber] S WITH (NOLOCK)
                     JOIN [dbo].[Campaign] C WITH (NOLOCK)
                         ON S.[IdUser] = S.[IdUser] AND S.[IdCampaign] = C.[IdCampaign]
                     JOIN [dbo].[User] U WITH (NOLOCK)
                         ON S.[IdUser] = U.[IdUser]
+	                LEFT JOIN [dbo].[Label] L WITH (NOLOCK)
+		                ON C.[IdLabel] = L.[IdLabel]
                     WHERE
                         U.[Email] = @userName
                         AND C.[Status] IN (5,9)
@@ -233,6 +240,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         ,C.[UTCScheduleDate]
                         ,C.[FromEmail]
                         ,C.[CampaignType]
+		                ,L.[Name]
                 ) RPT
                 GROUP BY RPT.[IdUser]
                         ,RPT.[IdCampaign]
@@ -240,6 +248,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         ,RPT.[UTCScheduleDate]
                         ,RPT.[FromEmail]
                         ,RPT.[CampaignType]
+		                ,RPT.[LabelName]
                 ORDER BY RPT.[UTCScheduleDate] DESC
                 OFFSET @pageNumber * @PageSize ROWS
                 FETCH NEXT @pageSize ROWS ONLY";
