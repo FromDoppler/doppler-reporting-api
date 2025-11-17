@@ -218,6 +218,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         ,0 [Unsubscribes]
                         ,COUNT(1) [Spam]
                         ,L.[Name] [LabelName]
+                        ,LC.[Colour] [LabelColour]
                     FROM [dbo].[Subscriber] S WITH (NOLOCK)
                     JOIN [dbo].[Campaign] C WITH (NOLOCK)
                         ON S.[IdUser] = S.[IdUser] AND S.[IdCampaign] = C.[IdCampaign]
