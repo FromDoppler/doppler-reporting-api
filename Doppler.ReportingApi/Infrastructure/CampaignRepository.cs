@@ -123,7 +123,7 @@ namespace Doppler.ReportingApi.Infrastructure
                     RPT.[IdUser]
                     ,RPT.[IdCampaign]
                     ,RPT.[Name]
-                    ,(convert(VARCHAR(16), dateadd(MINUTE, @timezone, RPT.[UTCScheduleDate]), 103) + ' ' + convert(VARCHAR(5), dateadd(MINUTE, @timezone, RPT.[UTCScheduleDate]), 114)) AS [UTCScheduleDate]
+                    ,dateadd(MINUTE, @timezone, RPT.[UTCScheduleDate]) AS [UTCScheduleDate]
                     ,RPT.[FromEmail]
                     ,RPT.[CampaignType]
                     ,SUM(RPT.[Subscribers]) [Subscribers]
