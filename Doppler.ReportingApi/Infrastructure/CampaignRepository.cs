@@ -107,8 +107,12 @@ namespace Doppler.ReportingApi.Infrastructure
             }
         }
 
-        public async Task<List<SentCampaignMetrics>> GetSentCampaignsMetrics(string userName, int pageNumber, int pageSize, DateTime? startDate = null, DateTime? endDate = null, string campaignName = null, string campaignType = null, string fromEmail = null)
+        public async Task<List<SentCampaignMetrics>> GetSentCampaignsMetrics(string userName, int pageNumber, int pageSize, DateTime? startDate = null, DateTime? endDate = null, string campaignName = null, string campaignType = null, string fromEmail = null, List<string> labels = null)
         {
+            var labelsJoin = labels != null && labels.Any()
+            ? "," + string.Join(",", labels.Select(l => l.Replace(" ", ""))) + ","
+            : null;
+
             using (var connection = _connectionFactory.GetConnection())
             {
                 var dummyDatabaseQuery = @"
@@ -201,6 +205,10 @@ namespace Doppler.ReportingApi.Infrastructure
                         AND C.[IdTestCampaign] IS NULL
                         AND C.[IdScheduledTask] IS NULL
                         AND (c.TestABCategory IS NULL OR c.TestABCategory = 3)
+                        AND (
+                            @labelsJoin IS NULL
+                            OR @labelsJoin LIKE '%,' + REPLACE(L.[Name], ' ', '') + ',%'
+                        )
                     UNION ALL
                     SELECT
                         S.[IdUser]
@@ -240,6 +248,10 @@ namespace Doppler.ReportingApi.Infrastructure
                         AND C.[IdTestCampaign] IS NULL
                         AND C.[IdScheduledTask] IS NULL
                         AND (c.TestABCategory IS NULL OR c.TestABCategory = 3)
+                        AND (
+                            @labelsJoin IS NULL
+                            OR @labelsJoin LIKE '%,' + REPLACE(L.[Name], ' ', '') + ',%'
+                        )
                     GROUP BY
                         S.[IdUser]
                         ,S.[IdCampaign]
@@ -262,14 +274,18 @@ namespace Doppler.ReportingApi.Infrastructure
                 OFFSET @pageNumber * @PageSize ROWS
                 FETCH NEXT @pageSize ROWS ONLY";
 
-                var results = await connection.QueryAsync<SentCampaignMetrics>(dummyDatabaseQuery, new { userName, pageNumber, pageSize, startDate, endDate, campaignName, campaignType, fromEmail });
+                var results = await connection.QueryAsync<SentCampaignMetrics>(dummyDatabaseQuery, new { userName, pageNumber, pageSize, startDate, endDate, campaignName, campaignType, fromEmail, labelsJoin });
 
                 return results.ToList();
             }
         }
 
-        public async Task<int> GetSentCampaignsCount(string userName, DateTime? startDate = null, DateTime? endDate = null, string campaignName = null, string campaignType = null, string fromEmail = null)
+        public async Task<int> GetSentCampaignsCount(string userName, DateTime? startDate = null, DateTime? endDate = null, string campaignName = null, string campaignType = null, string fromEmail = null, List<string> labels = null)
         {
+            var labelsJoin = labels != null && labels.Any()
+            ? "," + string.Join(",", labels.Select(l => l.Replace(" ", ""))) + ","
+            : null;
+
             using (var connection = _connectionFactory.GetConnection())
             {
                 var dummyDatabaseQuery = @"
@@ -277,6 +293,8 @@ namespace Doppler.ReportingApi.Infrastructure
                 FROM [dbo].[Campaign] C WITH (NOLOCK)
                 JOIN [dbo].[User] U WITH (NOLOCK)
                     ON C.[IdUser] = U.[IdUser]
+                LEFT JOIN [dbo].[Label] L WITH (NOLOCK)
+                    ON C.[IdLabel] = L.IdLabel
                 WHERE
                     U.[Email] = @userName
                     AND C.[Status] IN (5,9)
@@ -288,9 +306,13 @@ namespace Doppler.ReportingApi.Infrastructure
                     AND (@fromEmail IS NULL OR LOWER(LTRIM(RTRIM(C.[FromEmail]))) LIKE LOWER(LTRIM(RTRIM(@fromEmail))))
                     AND C.[IdTestCampaign] IS NULL
                     AND C.[IdScheduledTask] IS NULL
-                    AND (c.TestABCategory IS NULL OR c.TestABCategory = 3)";
+                    AND (c.TestABCategory IS NULL OR c.TestABCategory = 3)
+                    AND (
+                    @labelsJoin IS NULL
+                    OR @labelsJoin LIKE '%,' + REPLACE(L.[Name], ' ', '') + ',%'
+                )";
 
-                var count = await connection.QuerySingleAsync<int>(dummyDatabaseQuery, new { userName, startDate, endDate, campaignName, campaignType, fromEmail });
+                var count = await connection.QuerySingleAsync<int>(dummyDatabaseQuery, new { userName, startDate, endDate, campaignName, campaignType, fromEmail, labelsJoin });
 
                 return count;
             }
