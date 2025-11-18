@@ -73,7 +73,8 @@ namespace Doppler.ReportingApi.Controllers
                 endDate,
                 campaignFilter.CampaignName,
                 campaignType,
-                campaignFilter.FromEmail
+                campaignFilter.FromEmail,
+                campaignFilter.Labels
                 );
 
             var items = await _campaignRepository.GetSentCampaignsMetrics(
@@ -84,7 +85,8 @@ namespace Doppler.ReportingApi.Controllers
                 endDate,
                 campaignFilter.CampaignName,
                 campaignType,
-                campaignFilter.FromEmail
+                campaignFilter.FromEmail,
+                campaignFilter.Labels
                 );
 
             var pagedResult = new BaseCollectionPage<SentCampaignMetrics>
