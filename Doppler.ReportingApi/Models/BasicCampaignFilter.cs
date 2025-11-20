@@ -8,6 +8,6 @@ namespace Doppler.ReportingApi.Models
         public string CampaignName { get; set; } = null;
         public CampaignTypeEnum? CampaignType { get; set; } = null;
         public string FromEmail { get; set; } = null;
-        public List<string> Labels { get; set; }
+        public List<int> Labels { get; set; }
     }
 }
