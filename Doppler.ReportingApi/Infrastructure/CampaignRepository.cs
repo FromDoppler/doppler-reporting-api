@@ -188,7 +188,7 @@ namespace Doppler.ReportingApi.Infrastructure
                     LEFT JOIN [dbo].[Label] L WITH (NOLOCK)
                         ON C.[IdLabel] = L.[IdLabel]
                     LEFT JOIN [dbo].[Colour] LC WITH (NOLOCK)
-                        ON LC.[IdColour] = L.[IdColour]
+                        ON L.[IdColour] = LC.[IdColour]
                     WHERE
                         U.[Email] = @userName
                         AND C.[Status] IN (5,9)
@@ -221,13 +221,13 @@ namespace Doppler.ReportingApi.Infrastructure
                         ,LC.[Colour] [LabelColour]
                     FROM [dbo].[Subscriber] S WITH (NOLOCK)
                     JOIN [dbo].[Campaign] C WITH (NOLOCK)
-                        ON S.[IdUser] = S.[IdUser] AND S.[IdCampaign] = C.[IdCampaign]
+                        ON S.[IdUser] = C.[IdUser] AND S.[IdCampaign] = C.[IdCampaign]
                     JOIN [dbo].[User] U WITH (NOLOCK)
                         ON S.[IdUser] = U.[IdUser]
                     LEFT JOIN [dbo].[Label] L WITH (NOLOCK)
                         ON C.[IdLabel] = L.[IdLabel]
                     LEFT JOIN [dbo].[Colour] LC WITH (NOLOCK)
-                        ON LC.[IdColour] = L.[IdColour]
+                        ON L.[IdColour] = LC.[IdColour]
                     WHERE
                         U.[Email] = @userName
                         AND C.[Status] IN (5,9)
