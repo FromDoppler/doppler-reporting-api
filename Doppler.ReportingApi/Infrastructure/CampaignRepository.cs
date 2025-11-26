@@ -1,6 +1,5 @@
 using Dapper;
 using Doppler.ReportingApi.Models;
-using Doppler.ReportingApi.Models.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -107,8 +106,10 @@ namespace Doppler.ReportingApi.Infrastructure
             }
         }
 
-        public async Task<List<SentCampaignMetrics>> GetSentCampaignsMetrics(string userName, int pageNumber, int pageSize, DateTime? startDate = null, DateTime? endDate = null, string campaignName = null, string campaignType = null, string fromEmail = null)
+        public async Task<List<SentCampaignMetrics>> GetSentCampaignsMetrics(string userName, int pageNumber, int pageSize, DateTime? startDate = null, DateTime? endDate = null, string campaignName = null, string campaignType = null, string fromEmail = null, List<int> labels = null)
         {
+            var labelsCount = labels?.Count ?? 0;
+
             using (var connection = _connectionFactory.GetConnection())
             {
                 var dummyDatabaseQuery = @"
@@ -200,7 +201,11 @@ namespace Doppler.ReportingApi.Infrastructure
                         AND (@fromEmail IS NULL OR LOWER(LTRIM(RTRIM(C.[FromEmail]))) LIKE LOWER(LTRIM(RTRIM(@fromEmail))))
                         AND C.[IdTestCampaign] IS NULL
                         AND C.[IdScheduledTask] IS NULL
-                        AND (c.TestABCategory IS NULL OR c.TestABCategory = 3)
+                        AND (C.TestABCategory IS NULL OR C.TestABCategory = 3)
+                        AND (
+                            @labelsCount = 0
+                            OR C.[IdLabel] IN @labels
+                        )
                     UNION ALL
                     SELECT
                         S.[IdUser]
@@ -239,7 +244,11 @@ namespace Doppler.ReportingApi.Infrastructure
                         AND (@fromEmail IS NULL OR LOWER(LTRIM(RTRIM(C.[FromEmail]))) LIKE LOWER(LTRIM(RTRIM(@fromEmail))))
                         AND C.[IdTestCampaign] IS NULL
                         AND C.[IdScheduledTask] IS NULL
-                        AND (c.TestABCategory IS NULL OR c.TestABCategory = 3)
+                        AND (C.TestABCategory IS NULL OR C.TestABCategory = 3)
+                        AND (
+                            @labelsCount = 0
+                            OR C.[IdLabel] IN @labels
+                        )
                     GROUP BY
                         S.[IdUser]
                         ,S.[IdCampaign]
@@ -259,17 +268,19 @@ namespace Doppler.ReportingApi.Infrastructure
                         ,RPT.[LabelName]
                         ,RPT.[LabelColour]
                 ORDER BY RPT.[UTCScheduleDate] DESC
-                OFFSET @pageNumber * @PageSize ROWS
+                OFFSET @pageNumber * @pageSize ROWS
                 FETCH NEXT @pageSize ROWS ONLY";
 
-                var results = await connection.QueryAsync<SentCampaignMetrics>(dummyDatabaseQuery, new { userName, pageNumber, pageSize, startDate, endDate, campaignName, campaignType, fromEmail });
+                var results = await connection.QueryAsync<SentCampaignMetrics>(dummyDatabaseQuery, new { userName, pageNumber, pageSize, startDate, endDate, campaignName, campaignType, fromEmail, labelsCount, labels });
 
                 return results.ToList();
             }
         }
 
-        public async Task<int> GetSentCampaignsCount(string userName, DateTime? startDate = null, DateTime? endDate = null, string campaignName = null, string campaignType = null, string fromEmail = null)
+        public async Task<int> GetSentCampaignsCount(string userName, DateTime? startDate = null, DateTime? endDate = null, string campaignName = null, string campaignType = null, string fromEmail = null, List<int> labels = null)
         {
+            var labelsCount = labels?.Count ?? 0;
+
             using (var connection = _connectionFactory.GetConnection())
             {
                 var dummyDatabaseQuery = @"
@@ -277,6 +288,8 @@ namespace Doppler.ReportingApi.Infrastructure
                 FROM [dbo].[Campaign] C WITH (NOLOCK)
                 JOIN [dbo].[User] U WITH (NOLOCK)
                     ON C.[IdUser] = U.[IdUser]
+                LEFT JOIN [dbo].[Label] L WITH (NOLOCK)
+                    ON C.[IdLabel] = L.IdLabel
                 WHERE
                     U.[Email] = @userName
                     AND C.[Status] IN (5,9)
@@ -288,9 +301,13 @@ namespace Doppler.ReportingApi.Infrastructure
                     AND (@fromEmail IS NULL OR LOWER(LTRIM(RTRIM(C.[FromEmail]))) LIKE LOWER(LTRIM(RTRIM(@fromEmail))))
                     AND C.[IdTestCampaign] IS NULL
                     AND C.[IdScheduledTask] IS NULL
-                    AND (c.TestABCategory IS NULL OR c.TestABCategory = 3)";
+                    AND (C.TestABCategory IS NULL OR C.TestABCategory = 3)
+                    AND (
+                    @labelsCount = 0
+                    OR C.[IdLabel] IN @labels
+                )";
 
-                var count = await connection.QuerySingleAsync<int>(dummyDatabaseQuery, new { userName, startDate, endDate, campaignName, campaignType, fromEmail });
+                var count = await connection.QuerySingleAsync<int>(dummyDatabaseQuery, new { userName, startDate, endDate, campaignName, campaignType, fromEmail, labelsCount, labels });
 
                 return count;
             }
@@ -373,7 +390,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         AND (@endDate IS NULL OR C.[UTCScheduleDate] < @endDate)
                         AND C.[IdTestCampaign] IS NULL
                         AND C.[IdScheduledTask] IS NULL
-                        AND (c.TestABCategory IS NULL OR c.TestABCategory = 3)
+                        AND (C.TestABCategory IS NULL OR C.TestABCategory = 3)
                     UNION ALL
                     SELECT
                         S.[IdUser]
@@ -400,7 +417,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         AND (@endDate IS NULL OR C.[UTCScheduleDate] < @endDate)
                         AND C.[IdTestCampaign] IS NULL
                         AND C.[IdScheduledTask] IS NULL
-                        AND (c.TestABCategory IS NULL OR c.TestABCategory = 3)
+                        AND (C.TestABCategory IS NULL OR C.TestABCategory = 3)
                     GROUP BY
                         S.[IdUser]
                         ,S.[IdCampaign]
@@ -414,7 +431,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         ,MONTH(dateadd(MINUTE, @timezone, UTCScheduleDate))
 
                 ORDER BY [Year] DESC, [Month] DESC
-                OFFSET @pageNumber * @PageSize ROWS
+                OFFSET @pageNumber * @pageSize ROWS
                 FETCH NEXT @pageSize ROWS ONLY";
 
                 var results = await connection.QueryAsync<MonthlyCampaignMetrics>(dummyDatabaseQuery, new { userName, pageNumber, pageSize, startDate, endDate });
@@ -445,7 +462,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         AND (@endDate IS NULL OR C.[UTCScheduleDate] < @endDate)
                         AND C.[IdTestCampaign] IS NULL
                         AND C.[IdScheduledTask] IS NULL
-                        AND (c.TestABCategory IS NULL OR c.TestABCategory = 3)
+                        AND (C.TestABCategory IS NULL OR C.TestABCategory = 3)
                     GROUP BY
                         C.[IdUser],
                         YEAR(C.[UTCScheduleDate]),
