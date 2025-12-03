@@ -114,8 +114,11 @@ namespace Doppler.ReportingApi.Infrastructure
             {
                 var dummyDatabaseQuery = @"
                 DECLARE @timezone INT
+                DECLARE @idUser INT
 
-                SELECT @timezone = offset
+                SELECT 
+                    @timezone = offset
+                    @idUser = u.IdUser
                 FROM dbo.usertimezone timezone
                 INNER JOIN dbo.[user] u ON u.idusertimezone = timezone.idusertimezone
                 WHERE u.[Email] = @userName
@@ -179,8 +182,8 @@ namespace Doppler.ReportingApi.Infrastructure
                         ,ISNULL(C.[DistinctClickCount],0) [Clicks]
                         ,ISNULL(C.[HardBouncedMailCount],0) [Hard]
                         ,ISNULL (C.[SoftBouncedMailCount],0) [Soft]
-                        ,ISNULL(C.[UnsubscriptionsCount],0) [Unsubscribes]
-                        ,0 [Spam]
+                        ,ISNULL(C.[UnsubscriptionsCount], Unsubscribes.Unsubscribes) [Unsubscribes]
+                        ,Unsubscribes.Spam [Spam]
                         ,L.[Name] [LabelName]
                         ,LC.[Colour] [LabelColour]
                     FROM [dbo].[Campaign] C WITH (NOLOCK)
@@ -190,6 +193,30 @@ namespace Doppler.ReportingApi.Infrastructure
                         ON C.[IdLabel] = L.[IdLabel]
                     LEFT JOIN [dbo].[Colour] LC WITH (NOLOCK)
                         ON L.[IdColour] = LC.[IdColour]
+                    LEFT JOIN (
+                        SELECT 
+                            COUNT(
+                                CASE 
+                                    WHEN S.IdUnsubscriptionReason <> 2
+                                        AND S.UnsubscriptionSubreason NOT IN (2,3,4)
+                                    THEN 1
+                                END
+                            ) [Unsubscribes]
+                            ,COUNT(
+                                CASE
+                                    WHEN S.IdUnsubscriptionReason = 2
+                                        OR S.UnsubscriptionSubreason IN (2,3,4)
+                                    THEN 1
+                                END
+                            ) [Spam]
+                            ,c.IdCampaign
+                        FROM dbo.campaign c
+                        INNER JOIN dbo.subscriber s ON c.idcampaign = s.IdCampaign
+                        WHERE c.iduser = @idUser
+                            AND c.STATUS in (5, 9)
+                            AND c.IdTestCampaign IS NULL
+                        GROUP BY c.IdCampaign
+                    ) Unsubscribes ON c.idcampaign = Unsubscribes.IdCampaign
                     WHERE
                         U.[Email] = @userName
                         AND C.[Status] IN (5,9)
@@ -206,58 +233,6 @@ namespace Doppler.ReportingApi.Infrastructure
                             @labelsCount = 0
                             OR C.[IdLabel] IN @labels
                         )
-                    UNION ALL
-                    SELECT
-                        S.[IdUser]
-                        ,S.[IdCampaign]
-                        ,C.[Name]
-                        ,C.[UTCScheduleDate]
-                        ,C.[FromEmail]
-                        ,C.[CampaignType]
-                        ,0 [Subscribers]
-                        ,0 [Sent]
-                        ,0 [Opens]
-                        ,0 [Clicks]
-                        ,0 [Hard]
-                        ,0 [Soft]
-                        ,0 [Unsubscribes]
-                        ,COUNT(1) [Spam]
-                        ,L.[Name] [LabelName]
-                        ,LC.[Colour] [LabelColour]
-                    FROM [dbo].[Subscriber] S WITH (NOLOCK)
-                    JOIN [dbo].[Campaign] C WITH (NOLOCK)
-                        ON S.[IdUser] = C.[IdUser] AND S.[IdCampaign] = C.[IdCampaign]
-                    JOIN [dbo].[User] U WITH (NOLOCK)
-                        ON S.[IdUser] = U.[IdUser]
-                    LEFT JOIN [dbo].[Label] L WITH (NOLOCK)
-                        ON C.[IdLabel] = L.[IdLabel]
-                    LEFT JOIN [dbo].[Colour] LC WITH (NOLOCK)
-                        ON L.[IdColour] = LC.[IdColour]
-                    WHERE
-                        U.[Email] = @userName
-                        AND C.[Status] IN (5,9)
-                        AND C.Active = 1
-                        AND (@startDate IS NULL OR C.[UTCScheduleDate] >= @startDate)
-                        AND (@endDate IS NULL OR C.[UTCScheduleDate] <= @endDate)
-                        AND (@campaignName IS NULL OR LOWER(LTRIM(RTRIM(C.[Name]))) LIKE '%' + LOWER(LTRIM(RTRIM(@campaignName))) + '%')
-                        AND (@campaignType IS NULL OR C.[CampaignType] LIKE @campaignType)
-                        AND (@fromEmail IS NULL OR LOWER(LTRIM(RTRIM(C.[FromEmail]))) LIKE LOWER(LTRIM(RTRIM(@fromEmail))))
-                        AND C.[IdTestCampaign] IS NULL
-                        AND C.[IdScheduledTask] IS NULL
-                        AND (C.TestABCategory IS NULL OR C.TestABCategory = 3)
-                        AND (
-                            @labelsCount = 0
-                            OR C.[IdLabel] IN @labels
-                        )
-                    GROUP BY
-                        S.[IdUser]
-                        ,S.[IdCampaign]
-                        ,C.[Name]
-                        ,C.[UTCScheduleDate]
-                        ,C.[FromEmail]
-                        ,C.[CampaignType]
-                        ,L.[Name]
-                        ,LC.[Colour]
                 ) RPT
                 GROUP BY RPT.[IdUser]
                         ,RPT.[IdCampaign]
@@ -402,11 +377,23 @@ namespace Doppler.ReportingApi.Infrastructure
                         ,0 [Clicks]
                         ,0 [Hard]
                         ,0 [Soft]
-                        ,0 [Unsubscribes]
-                        ,COUNT(1) [Spam]
+                        ,COUNT(
+                            CASE 
+                                WHEN S.IdUnsubscriptionReason <> 2
+                                    AND S.UnsubscriptionSubreason NOT IN (2,3,4)
+                                THEN 1
+                            END
+                        ) [Unsubscribes]
+                        ,COUNT(
+                            CASE
+                                WHEN S.IdUnsubscriptionReason = 2
+                                    OR S.UnsubscriptionSubreason IN (2,3,4)
+                                THEN 1
+                            END
+                        ) [Spam]
                     FROM [dbo].[Subscriber] S WITH (NOLOCK)
                     JOIN [dbo].[Campaign] C WITH (NOLOCK)
-                        ON S.[IdUser] = S.[IdUser] AND S.[IdCampaign] = C.[IdCampaign]
+                        ON S.[IdUser] = C.[IdUser] AND S.[IdCampaign] = C.[IdCampaign]
                     JOIN [dbo].[User] U WITH (NOLOCK)
                         ON S.[IdUser] = U.[IdUser]
                     WHERE
