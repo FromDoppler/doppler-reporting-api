@@ -116,12 +116,12 @@ namespace Doppler.ReportingApi.Infrastructure
                 DECLARE @timezone INT
                 DECLARE @idUser INT
 
-                SELECT 
+                SELECT
                     @timezone = offset
-                    @idUser = u.IdUser
+                    ,@idUser = u.IdUser
                 FROM dbo.usertimezone timezone
                 INNER JOIN dbo.[user] u ON u.idusertimezone = timezone.idusertimezone
-                WHERE u.[Email] = @userName
+                WHERE u.[Email] = @userName;
 
                 SELECT
                     RPT.[IdUser]
@@ -194,9 +194,9 @@ namespace Doppler.ReportingApi.Infrastructure
                     LEFT JOIN [dbo].[Colour] LC WITH (NOLOCK)
                         ON L.[IdColour] = LC.[IdColour]
                     LEFT JOIN (
-                        SELECT 
+                        SELECT
                             COUNT(
-                                CASE 
+                                CASE
                                     WHEN S.IdUnsubscriptionReason <> 2
                                         AND S.UnsubscriptionSubreason NOT IN (2,3,4)
                                     THEN 1
@@ -215,6 +215,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         WHERE c.iduser = @idUser
                             AND c.STATUS in (5, 9)
                             AND c.IdTestCampaign IS NULL
+                            AND s.IdSubscribersStatus = 5
                         GROUP BY c.IdCampaign
                     ) Unsubscribes ON c.idcampaign = Unsubscribes.IdCampaign
                     WHERE
@@ -378,7 +379,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         ,0 [Hard]
                         ,0 [Soft]
                         ,COUNT(
-                            CASE 
+                            CASE
                                 WHEN S.IdUnsubscriptionReason <> 2
                                     AND S.UnsubscriptionSubreason NOT IN (2,3,4)
                                 THEN 1
@@ -405,6 +406,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         AND C.[IdTestCampaign] IS NULL
                         AND C.[IdScheduledTask] IS NULL
                         AND (C.TestABCategory IS NULL OR C.TestABCategory = 3)
+                        AND S.IdSubscribersStatus = 5
                     GROUP BY
                         S.[IdUser]
                         ,S.[IdCampaign]
