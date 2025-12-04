@@ -348,7 +348,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         ,C.[IdCampaign]
                         ,C.[UTCScheduleDate]
                         ,ISNULL(C.[AmountSubscribersToSend],0) [Subscribers]
-                        ,ISNULL(C.[AmountSentSubscribers],0) [Sent]
+                        ,(ISNULL(C.[DistinctOpenedMailCount],0) + ISNULL(C.[UnopenedMailCount],0)) AS [Sent]
                         ,ISNULL(C.[DistinctOpenedMailCount],0) [Opens]
                         ,ISNULL(C.[DistinctClickCount],0) [Clicks]
                         ,ISNULL(C.[HardBouncedMailCount],0) [Hard]
