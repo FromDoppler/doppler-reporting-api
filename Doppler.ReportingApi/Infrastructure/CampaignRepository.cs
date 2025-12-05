@@ -139,12 +139,12 @@ namespace Doppler.ReportingApi.Infrastructure
                     ,SUM(RPT.[Opens]) [Opens]
                     ,CASE
                         WHEN SUM(RPT.[Sent]) = 0 THEN 0
-                        ELSE CAST(SUM(RPT.[Opens]) * 100.0 / SUM(RPT.[Sent]) AS DECIMAL(10,2))
+                        ELSE CAST(SUM(RPT.[Opens]) * 100.0 / SUM(RPT.[Subscribers]) AS DECIMAL(10,2))
                     END AS [OpenRate]
                     ,SUM(RPT.[Sent]) - SUM(RPT.[Opens]) AS [Unopens]
                     ,CASE
                         WHEN SUM(RPT.[Sent]) = 0 THEN 0
-                        ELSE CAST(SUM(RPT.[Sent] - RPT.[Opens]) * 100.0 / SUM(RPT.[Sent]) AS DECIMAL(10,2))
+                        ELSE CAST(SUM(RPT.[Sent] - RPT.[Opens]) * 100.0 / SUM(RPT.[Subscribers]) AS DECIMAL(10,2))
                     END AS [UnopenRate]
                     ,SUM(RPT.[Clicks]) [Clicks]
                     ,CASE
