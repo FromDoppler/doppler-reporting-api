@@ -139,12 +139,12 @@ namespace Doppler.ReportingApi.Infrastructure
                     ,SUM(RPT.[Opens]) [Opens]
                     ,CASE
                         WHEN SUM(RPT.[Sent]) = 0 THEN 0
-                        ELSE CAST(SUM(RPT.[Opens]) * 100.0 / SUM(RPT.[Sent]) AS DECIMAL(10,2))
+                        ELSE CAST(SUM(RPT.[Opens]) * 100.0 / SUM(RPT.[Subscribers]) AS DECIMAL(10,2))
                     END AS [OpenRate]
-                    ,SUM(RPT.[Sent]) - SUM(RPT.[Opens]) AS [Unopens]
+                    ,SUM(RPT.[Unopens]) AS [Unopens]
                     ,CASE
                         WHEN SUM(RPT.[Sent]) = 0 THEN 0
-                        ELSE CAST(SUM(RPT.[Sent] - RPT.[Opens]) * 100.0 / SUM(RPT.[Sent]) AS DECIMAL(10,2))
+                        ELSE CAST(SUM(RPT.[Sent] - RPT.[Opens]) * 100.0 / SUM(RPT.[Subscribers]) AS DECIMAL(10,2))
                     END AS [UnopenRate]
                     ,SUM(RPT.[Clicks]) [Clicks]
                     ,CASE
@@ -176,9 +176,10 @@ namespace Doppler.ReportingApi.Infrastructure
                         ,C.[UTCScheduleDate]
                         ,C.[FromEmail]
                         ,C.[CampaignType]
-                        ,ISNULL(C.[AmountSubscribersToSend],0) [Subscribers]
-                        ,ISNULL(C.[AmountSentSubscribers],0) [Sent]
+                        ,ISNULL(C.[AmountSentSubscribers],0) [Subscribers]
+                        ,(ISNULL(C.[DistinctOpenedMailCount],0) + ISNULL(C.[UnopenedMailCount],0)) AS [Sent]
                         ,ISNULL(C.[DistinctOpenedMailCount],0) [Opens]
+                        ,ISNULL(C.[UnopenedMailCount], 0) [Unopens]
                         ,ISNULL(C.[DistinctClickCount],0) [Clicks]
                         ,ISNULL(C.[HardBouncedMailCount],0) [Hard]
                         ,ISNULL (C.[SoftBouncedMailCount],0) [Soft]
@@ -305,7 +306,7 @@ namespace Doppler.ReportingApi.Infrastructure
                     RPT.[IdUser]
                     ,YEAR(dateadd(MINUTE, @timezone, UTCScheduleDate)) [Year]
                     ,MONTH(dateadd(MINUTE, @timezone, UTCScheduleDate)) [Month]
-                    ,COUNT(RPT.[IdCampaign]) [CampaginsCount]
+                    ,COUNT(DISTINCT RPT.[IdCampaign]) [CampaginsCount]
                     ,SUM(RPT.[Subscribers]) [Subscribers]
                     ,SUM(RPT.[Sent]) [Sent]
                     ,CASE
@@ -315,12 +316,12 @@ namespace Doppler.ReportingApi.Infrastructure
                     ,SUM(RPT.[Opens]) [Opens]
                     ,CASE
                         WHEN SUM(RPT.[Sent]) = 0 THEN 0
-                        ELSE CAST(SUM(RPT.[Opens]) * 100.0 / SUM(RPT.[Sent]) AS DECIMAL(5,2))
+                        ELSE CAST(SUM(RPT.[Opens]) * 100.0 / SUM(RPT.[Subscribers]) AS DECIMAL(5,2))
                     END AS [OpenRate]
-                    ,SUM(RPT.[Sent]) - SUM(RPT.[Opens]) AS [Unopens]
+                    ,SUM(RPT.[Unopens]) AS [Unopens]
                     ,CASE
                         WHEN SUM(RPT.[Sent]) = 0 THEN 0
-                        ELSE CAST(SUM(RPT.[Sent] - RPT.[Opens]) * 100.0 / SUM(RPT.[Sent]) AS DECIMAL(5,2))
+                        ELSE CAST(SUM(RPT.[Sent] - RPT.[Opens]) * 100.0 / SUM(RPT.[Subscribers]) AS DECIMAL(5,2))
                     END AS [UnopenRate]
                     ,SUM(RPT.[Clicks]) [Clicks]
                     ,CASE
@@ -347,9 +348,10 @@ namespace Doppler.ReportingApi.Infrastructure
                         C.[IdUser]
                         ,C.[IdCampaign]
                         ,C.[UTCScheduleDate]
-                        ,ISNULL(C.[AmountSubscribersToSend],0) [Subscribers]
-                        ,ISNULL(C.[AmountSentSubscribers],0) [Sent]
+                        ,ISNULL(C.[AmountSentSubscribers],0) [Subscribers]
+                        ,(ISNULL(C.AmountSentSubscribers, 0) - (ISNULL(C.HardBouncedMailCount, 0) + ISNULL(C.SoftBouncedMailCount, 0))) AS [Sent]
                         ,ISNULL(C.[DistinctOpenedMailCount],0) [Opens]
+                        ,ISNULL(C.[UnopenedMailCount], 0) [Unopens]
                         ,ISNULL(C.[DistinctClickCount],0) [Clicks]
                         ,ISNULL(C.[HardBouncedMailCount],0) [Hard]
                         ,ISNULL(C.[SoftBouncedMailCount],0) [Soft]
@@ -375,6 +377,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         ,0 [Subscribers]
                         ,0 [Sent]
                         ,0 [Opens]
+                        ,0 [Unopens]
                         ,0 [Clicks]
                         ,0 [Hard]
                         ,0 [Soft]
