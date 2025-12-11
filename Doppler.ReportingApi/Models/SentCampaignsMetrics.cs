@@ -35,6 +35,12 @@ namespace Doppler.ReportingApi.Models
         public string CampaignType { get; set; }
 
         /// <summary>
+        /// Identifier of the A/B test associated with the campaign.
+        /// Null or zero when the campaign is not part of an A/B test.
+        /// </summary>
+        public int? IdTestAB { get; set; }
+
+        /// <summary>
         /// Total number of subscribers targeted by the campaign.
         /// </summary>
         public int Subscribers { get; set; }

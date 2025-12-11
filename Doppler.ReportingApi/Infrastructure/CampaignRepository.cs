@@ -130,6 +130,7 @@ namespace Doppler.ReportingApi.Infrastructure
                     ,dateadd(MINUTE, @timezone, RPT.[UTCScheduleDate]) AS [UTCScheduleDate]
                     ,RPT.[FromEmail]
                     ,RPT.[CampaignType]
+                    ,RPT.[IdTestAB]
                     ,SUM(RPT.[Subscribers]) [Subscribers]
                     ,SUM(RPT.[Sent]) [Sent]
                     ,CASE
@@ -176,6 +177,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         ,C.[UTCScheduleDate]
                         ,C.[FromEmail]
                         ,C.[CampaignType]
+                        ,C.[IdTestAB]
                         ,ISNULL(C.[AmountSentSubscribers],0) [Subscribers]
                         ,(ISNULL(C.[DistinctOpenedMailCount],0) + ISNULL(C.[UnopenedMailCount],0)) AS [Sent]
                         ,ISNULL(C.[DistinctOpenedMailCount],0) [Opens]
@@ -226,7 +228,12 @@ namespace Doppler.ReportingApi.Infrastructure
                         AND (@startDate IS NULL OR C.[UTCScheduleDate] >= @startDate)
                         AND (@endDate IS NULL OR C.[UTCScheduleDate] <= @endDate)
                         AND (@campaignName IS NULL OR LOWER(LTRIM(RTRIM(C.[Name]))) LIKE '%' + LOWER(LTRIM(RTRIM(@campaignName))) + '%')
-                        AND (@campaignType IS NULL OR C.[CampaignType] LIKE @campaignType)
+                        AND (
+                                @campaignType IS NULL
+                                OR (LTRIM(RTRIM(@campaignType)) = '')
+                                OR (@campaignType = 'TEST_AB' AND C.IdTestAB IS NOT NULL)
+                                OR (C.CampaignType = @campaignType AND C.IdTestAB IS NULL)
+                        )
                         AND (@fromEmail IS NULL OR LOWER(LTRIM(RTRIM(C.[FromEmail]))) LIKE LOWER(LTRIM(RTRIM(@fromEmail))))
                         AND C.[IdTestCampaign] IS NULL
                         AND C.[IdScheduledTask] IS NULL
@@ -242,6 +249,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         ,RPT.[UTCScheduleDate]
                         ,RPT.[FromEmail]
                         ,RPT.[CampaignType]
+                        ,RPT.[IdTestAB]
                         ,RPT.[LabelName]
                         ,RPT.[LabelColour]
                 ORDER BY RPT.[UTCScheduleDate] DESC
@@ -274,7 +282,12 @@ namespace Doppler.ReportingApi.Infrastructure
                     AND (@startDate IS NULL OR C.[UTCScheduleDate] >= @startDate)
                     AND (@endDate IS NULL OR C.[UTCScheduleDate] <= @endDate)
                     AND (@campaignName IS NULL OR LOWER(LTRIM(RTRIM(C.[Name]))) LIKE '%' + LOWER(LTRIM(RTRIM(@campaignName))) + '%')
-                    AND (@campaignType IS NULL OR C.[CampaignType] LIKE @campaignType)
+                    AND (
+                                @campaignType IS NULL
+                                OR (LTRIM(RTRIM(@campaignType)) = '')
+                                OR (@campaignType = 'TEST_AB' AND C.IdTestAB IS NOT NULL)
+                                OR (C.CampaignType = @campaignType AND C.IdTestAB IS NULL)
+                        )
                     AND (@fromEmail IS NULL OR LOWER(LTRIM(RTRIM(C.[FromEmail]))) LIKE LOWER(LTRIM(RTRIM(@fromEmail))))
                     AND C.[IdTestCampaign] IS NULL
                     AND C.[IdScheduledTask] IS NULL
