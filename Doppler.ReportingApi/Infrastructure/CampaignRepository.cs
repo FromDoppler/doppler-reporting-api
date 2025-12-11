@@ -283,10 +283,10 @@ namespace Doppler.ReportingApi.Infrastructure
                     AND (@endDate IS NULL OR C.[UTCScheduleDate] <= @endDate)
                     AND (@campaignName IS NULL OR LOWER(LTRIM(RTRIM(C.[Name]))) LIKE '%' + LOWER(LTRIM(RTRIM(@campaignName))) + '%')
                     AND (
-                                @campaignType IS NULL
-                                OR (LTRIM(RTRIM(@campaignType)) = '')
-                                OR (@campaignType = 'TEST_AB' AND C.IdTestAB IS NOT NULL)
-                                OR (C.CampaignType = @campaignType AND C.IdTestAB IS NULL)
+                            @campaignType IS NULL
+                            OR (LTRIM(RTRIM(@campaignType)) = '')
+                            OR (@campaignType = 'TEST_AB' AND C.IdTestAB IS NOT NULL)
+                            OR (C.CampaignType = @campaignType AND C.IdTestAB IS NULL)
                         )
                     AND (@fromEmail IS NULL OR LOWER(LTRIM(RTRIM(C.[FromEmail]))) LIKE LOWER(LTRIM(RTRIM(@fromEmail))))
                     AND C.[IdTestCampaign] IS NULL
