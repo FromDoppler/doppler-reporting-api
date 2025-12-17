@@ -139,12 +139,12 @@ namespace Doppler.ReportingApi.Infrastructure
                     END AS [DlvRate]
                     ,SUM(RPT.[Opens]) [Opens]
                     ,CASE
-                        WHEN SUM(RPT.[Sent]) = 0 THEN 0
+                        WHEN SUM(RPT.[Subscribers]) = 0 THEN 0
                         ELSE CAST(SUM(RPT.[Opens]) * 100.0 / SUM(RPT.[Subscribers]) AS DECIMAL(10,2))
                     END AS [OpenRate]
                     ,SUM(RPT.[Unopens]) AS [Unopens]
                     ,CASE
-                        WHEN SUM(RPT.[Sent]) = 0 THEN 0
+                        WHEN SUM(RPT.[Subscribers]) = 0 THEN 0
                         ELSE CAST(SUM(RPT.[Sent] - RPT.[Opens]) * 100.0 / SUM(RPT.[Subscribers]) AS DECIMAL(10,2))
                     END AS [UnopenRate]
                     ,SUM(RPT.[Clicks]) [Clicks]
@@ -328,12 +328,12 @@ namespace Doppler.ReportingApi.Infrastructure
                     END AS [DlvRate]
                     ,SUM(RPT.[Opens]) [Opens]
                     ,CASE
-                        WHEN SUM(RPT.[Sent]) = 0 THEN 0
+                        WHEN SUM(RPT.[Subscribers]) = 0 THEN 0
                         ELSE CAST(SUM(RPT.[Opens]) * 100.0 / SUM(RPT.[Subscribers]) AS DECIMAL(5,2))
                     END AS [OpenRate]
                     ,SUM(RPT.[Unopens]) AS [Unopens]
                     ,CASE
-                        WHEN SUM(RPT.[Sent]) = 0 THEN 0
+                        WHEN SUM(RPT.[Subscribers]) = 0 THEN 0
                         ELSE CAST(SUM(RPT.[Sent] - RPT.[Opens]) * 100.0 / SUM(RPT.[Subscribers]) AS DECIMAL(5,2))
                     END AS [UnopenRate]
                     ,SUM(RPT.[Clicks]) [Clicks]
