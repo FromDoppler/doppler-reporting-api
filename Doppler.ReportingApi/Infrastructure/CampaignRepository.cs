@@ -94,7 +94,7 @@ namespace Doppler.ReportingApi.Infrastructure
                             END) [Spam]
                     FROM [dbo].[Subscriber] S WITH (NOLOCK)
                     JOIN [dbo].[Campaign] C WITH (NOLOCK)
-                        ON S.[IdUser] = S.[IdUser] AND S.[IdCampaign] = C.[IdCampaign]
+                        ON S.[IdUser] = C.[IdUser] AND S.[IdCampaign] = C.[IdCampaign]
                     JOIN [dbo].[User] U WITH (NOLOCK)
                         ON S.[IdUser] = U.[IdUser]
                     WHERE
