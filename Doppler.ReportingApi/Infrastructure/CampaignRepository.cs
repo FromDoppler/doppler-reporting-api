@@ -20,10 +20,17 @@ namespace Doppler.ReportingApi.Infrastructure
             using (var connection = _connectionFactory.GetConnection())
             {
                 var dummyDatabaseQuery = @"
+                DECLARE @timezone INT
+
+                SELECT
+                    @timezone = offset
+                FROM dbo.usertimezone timezone
+                INNER JOIN dbo.[user] u ON u.idusertimezone = timezone.idusertimezone
+                WHERE u.[Email] = @userName;
+
                 SELECT
                     RPT.[IdUser],
                     RPT.[Date],
-                    SUM(RPT.[Subscribers]) [Subscribers],
                     SUM(RPT.[Sent]) [Sent],
                     SUM(RPT.[Opens]) [Opens],
                     SUM(RPT.[Clicks]) [Clicks],
@@ -34,8 +41,10 @@ namespace Doppler.ReportingApi.Infrastructure
                     SELECT
                         C.[IdUser]
                         ,[IdCampaign]
-                        ,CAST(C.[UTCScheduleDate] AS DATE) [Date]
-                        ,ISNULL(C.[AmountSubscribersToSend],0) [Subscribers]
+                        ,CAST(
+                            DATEADD(MINUTE, @timezone, C.[UTCScheduleDate])
+                            AS DATE
+                        ) AS [Date]
                         ,ISNULL(C.[AmountSentSubscribers],0) [Sent]
                         ,ISNULL(C.[DistinctOpenedMailCount],0) [Opens]
                         ,ISNULL(C.[DistinctClickCount],0) [Clicks]
@@ -60,8 +69,10 @@ namespace Doppler.ReportingApi.Infrastructure
                     SELECT
                         S.[IdUser]
                         ,S.[IdCampaign]
-                        ,CAST(C.[UTCScheduleDate] AS DATE) [Date]
-                        ,0 [Subscribers]
+                        ,CAST(
+                            DATEADD(MINUTE, @timezone, C.[UTCScheduleDate])
+                            AS DATE
+                        ) AS [Date]
                         ,0 [Sent]
                         ,0 [Opens]
                         ,0 [Clicks]
@@ -94,7 +105,10 @@ namespace Doppler.ReportingApi.Infrastructure
                     GROUP BY
                         S.[IdUser]
                         ,S.[IdCampaign]
-                        ,CAST(C.[UTCScheduleDate] AS DATE)
+                        ,CAST(
+                            DATEADD(MINUTE, @timezone, C.[UTCScheduleDate])
+                            AS DATE
+                        )
                 ) AS RPT
                 GROUP BY
                         RPT.[IdUser],
@@ -226,7 +240,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         AND C.[Status] IN (5,9)
                         AND C.Active = 1
                         AND (@startDate IS NULL OR C.[UTCScheduleDate] >= @startDate)
-                        AND (@endDate IS NULL OR C.[UTCScheduleDate] <= @endDate)
+                        AND (@endDate IS NULL OR C.[UTCScheduleDate] < @endDate)
                         AND (@campaignName IS NULL OR LOWER(LTRIM(RTRIM(C.[Name]))) LIKE '%' + LOWER(LTRIM(RTRIM(@campaignName))) + '%')
                         AND (
                                 @campaignType IS NULL
@@ -280,7 +294,7 @@ namespace Doppler.ReportingApi.Infrastructure
                     AND C.[Status] IN (5,9)
                     AND C.Active = 1
                     AND (@startDate IS NULL OR C.[UTCScheduleDate] >= @startDate)
-                    AND (@endDate IS NULL OR C.[UTCScheduleDate] <= @endDate)
+                    AND (@endDate IS NULL OR C.[UTCScheduleDate] < @endDate)
                     AND (@campaignName IS NULL OR LOWER(LTRIM(RTRIM(C.[Name]))) LIKE '%' + LOWER(LTRIM(RTRIM(@campaignName))) + '%')
                     AND (
                             @campaignType IS NULL
