@@ -31,7 +31,6 @@ namespace Doppler.ReportingApi.Infrastructure
                 SELECT
                     RPT.[IdUser],
                     RPT.[Date],
-                    SUM(RPT.[Subscribers]) [Subscribers],
                     SUM(RPT.[Sent]) [Sent],
                     SUM(RPT.[Opens]) [Opens],
                     SUM(RPT.[Clicks]) [Clicks],
@@ -46,8 +45,7 @@ namespace Doppler.ReportingApi.Infrastructure
                             DATEADD(MINUTE, @timezone, C.[UTCScheduleDate])
                             AS DATE
                         ) AS [Date]
-                        ,ISNULL(C.[AmountSentSubscribers],0) [Subscribers]
-                        ,(ISNULL(C.[DistinctOpenedMailCount],0) + ISNULL(C.[UnopenedMailCount],0)) AS [Sent]
+                        ,ISNULL(C.[AmountSentSubscribers],0) [Sent]
                         ,ISNULL(C.[DistinctOpenedMailCount],0) [Opens]
                         ,ISNULL(C.[DistinctClickCount],0) [Clicks]
                         ,ISNULL(C.[HardBouncedMailCount],0) [Hard]
@@ -64,8 +62,7 @@ namespace Doppler.ReportingApi.Infrastructure
                     WHERE
                         U.[Email] = @userName
                         AND C.[Status] IN (5,9,10)
-                        AND C.UTCScheduleDate >= @startDate
-                        AND C.UTCScheduleDate < @endDate
+                        AND C.[UTCScheduleDate] BETWEEN @startDate AND @endDate
                         AND C.[IdTestCampaign] IS NULL
                         AND C.[IdScheduledTask] IS NULL
                         AND (C.TestABCategory IS NULL OR C.TestABCategory = 3)
@@ -78,7 +75,6 @@ namespace Doppler.ReportingApi.Infrastructure
                             DATEADD(MINUTE, @timezone, C.[UTCScheduleDate])
                             AS DATE
                         ) AS [Date]
-                        ,0 [Subscribers]
                         ,0 [Sent]
                         ,0 [Opens]
                         ,0 [Clicks]
@@ -106,8 +102,7 @@ namespace Doppler.ReportingApi.Infrastructure
                     WHERE
                         U.[Email] = @userName
                         AND C.[Status] IN (5,9,10)
-                        AND C.UTCScheduleDate >= @startDate
-                        AND C.UTCScheduleDate < @endDate
+                        AND C.[UTCScheduleDate] BETWEEN @startDate AND @endDate
                         AND S.[IdSubscribersStatus] = 5
                     GROUP BY
                         S.[IdUser]
