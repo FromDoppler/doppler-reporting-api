@@ -65,6 +65,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         AND C.[UTCScheduleDate] BETWEEN @startDate AND @endDate
                         AND C.[IdTestCampaign] IS NULL
                         AND C.[IdScheduledTask] IS NULL
+                        AND C.Active = 1
                     UNION ALL
                     SELECT
                         S.[IdUser]
