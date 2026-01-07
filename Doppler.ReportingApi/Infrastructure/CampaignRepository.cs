@@ -103,6 +103,9 @@ namespace Doppler.ReportingApi.Infrastructure
                         AND C.[Status] IN (5,9,10)
                         AND C.[UTCScheduleDate] BETWEEN @startDate AND @endDate
                         AND S.[IdSubscribersStatus] = 5
+                        AND C.[IdTestCampaign] IS NULL
+                        AND C.[IdScheduledTask] IS NULL
+                        AND C.Active = 1
                     GROUP BY
                         S.[IdUser]
                         ,S.[IdCampaign]
