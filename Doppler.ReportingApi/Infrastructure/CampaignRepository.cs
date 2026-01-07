@@ -45,7 +45,7 @@ namespace Doppler.ReportingApi.Infrastructure
                             DATEADD(MINUTE, @timezone, C.[UTCScheduleDate])
                             AS DATE
                         ) AS [Date]
-                        ,ISNULL(C.[AmountSentSubscribers],0) [Sent]
+                        ,COALESCE(C.[AmountSentSubscribers], C.[AmountSubscribersToSend], 0) AS [Sent]
                         ,ISNULL(C.[DistinctOpenedMailCount],0) [Opens]
                         ,ISNULL(C.[DistinctClickCount],0) [Clicks]
                         ,ISNULL(C.[HardBouncedMailCount],0) [Hard]
