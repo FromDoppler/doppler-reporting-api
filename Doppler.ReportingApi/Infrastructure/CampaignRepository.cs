@@ -45,11 +45,11 @@ namespace Doppler.ReportingApi.Infrastructure
                             DATEADD(MINUTE, @timezone, C.[UTCSentDate])
                             AS DATE
                         ) AS [Date]
-                        ,COALESCE(C.[AmountSentSubscribers], C.[AmountSubscribersToSend], 0) AS [Sent]
-                        ,ISNULL(C.[DistinctOpenedMailCount],0) [Opens]
-                        ,ISNULL(C.[DistinctClickCount],0) [Clicks]
-                        ,ISNULL(C.[HardBouncedMailCount],0) [Hard]
-                        ,ISNULL (C.[SoftBouncedMailCount],0) [Soft]
+                        ,COALESCE(CS.[AmountSentSubscribers], CS.[AmountSubscribersToSend], 0) AS [Sent]
+                        ,ISNULL(CS.[DistinctOpenedMailCount],0) [Opens]
+                        ,ISNULL(CS.[DistinctClickCount],0) [Clicks]
+                        ,ISNULL(CS.[HardBouncedMailCount],0) [Hard]
+                        ,ISNULL (CS.[SoftBouncedMailCount],0) [Soft]
                         ,(CASE C.[Status]
                             WHEN 9
                                 THEN ISNULL(C.[UnsubscriptionsCount],0)
@@ -57,6 +57,7 @@ namespace Doppler.ReportingApi.Infrastructure
                             END) [Unsubscribes]
                         ,0 [Spam]
                     FROM [dbo].[Campaign] C WITH (NOLOCK)
+					LEFT JOIN dbo.CampaignStats CS ON CS.IdCampaign = C.IdCampaign
                     JOIN [dbo].[User] U WITH (NOLOCK)
                         ON C.[IdUser] = U.[IdUser]
                     WHERE
