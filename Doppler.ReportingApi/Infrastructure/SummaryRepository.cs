@@ -29,13 +29,15 @@ namespace Doppler.ReportingApi.Infrastructure
                         CAST(NULLIF((ISNULL(T.DistinctOpenedMailCount, 0) + ISNULL(T.UnopenedMailCount, 0)), 0) AS FLOAT) * 100 AS ClickThroughRate
                 FROM (
                     SELECT
-                    SUM(Campaign.AmountSentSubscribers) AS TotalSentEmails,
-                    SUM(Campaign.DistinctOpenedMailCount) AS DistinctOpenedMailCount,
+                    SUM(CS.AmountSentSubscribers) AS TotalSentEmails,
+                    SUM(CS.DistinctOpenedMailCount) AS DistinctOpenedMailCount,
 
-                    SUM(Campaign.UnopenedMailCount) AS UnopenedMailCount,
+                    SUM(CS.UnopenedMailCount) AS UnopenedMailCount,
                     SUM(LinkInfo.UniqueClickCount) AS UniqueClickCount
                     FROM [user]
                         INNER JOIN Campaign WITH (NOLOCK) on [user].iduser = Campaign.IdUser
+						LEFT JOIN CampaignStats CS ON CS.IdCampaign = Campaign.IdCampaign
+						
                     OUTER APPLY (
                         SELECT COUNT(DISTINCT LT.IdSubscriber) AS UniqueClickCount
                         FROM Link L WITH (NOLOCK)
