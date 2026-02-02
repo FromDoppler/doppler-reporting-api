@@ -145,7 +145,7 @@ namespace Doppler.ReportingApi.Infrastructure
                     RPT.[IdUser]
                     ,RPT.[IdCampaign]
                     ,RPT.[Name]
-                    ,dateadd(MINUTE, @timezone, RPT.[UTCScheduleDate]) AS [UTCScheduleDate]
+                    ,dateadd(MINUTE, @timezone, RPT.[UTCSentDate]) AS [UTCSentDate]
                     ,RPT.[FromEmail]
                     ,RPT.[CampaignType]
                     ,RPT.[IdTestAB]
@@ -192,7 +192,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         C.[IdUser]
                         ,C.[IdCampaign]
                         ,C.[Name]
-                        ,C.[UTCScheduleDate]
+                        ,C.[UTCSentDate]
                         ,C.[FromEmail]
                         ,C.[CampaignType]
                         ,C.[IdTestAB]
@@ -243,8 +243,8 @@ namespace Doppler.ReportingApi.Infrastructure
                         U.[Email] = @userName
                         AND C.[Status] IN (5,9)
                         AND C.Active = 1
-                        AND (@startDate IS NULL OR C.[UTCScheduleDate] >= @startDate)
-                        AND (@endDate IS NULL OR C.[UTCScheduleDate] < @endDate)
+                        AND (@startDate IS NULL OR C.[UTCSentDate] >= @startDate)
+                        AND (@endDate IS NULL OR C.[UTCSentDate] < @endDate)
                         AND (@campaignName IS NULL OR LOWER(LTRIM(RTRIM(C.[Name]))) LIKE '%' + LOWER(LTRIM(RTRIM(@campaignName))) + '%')
                         AND (
                                 @campaignType IS NULL
@@ -264,13 +264,13 @@ namespace Doppler.ReportingApi.Infrastructure
                 GROUP BY RPT.[IdUser]
                         ,RPT.[IdCampaign]
                         ,RPT.[Name]
-                        ,RPT.[UTCScheduleDate]
+                        ,RPT.[UTCSentDate]
                         ,RPT.[FromEmail]
                         ,RPT.[CampaignType]
                         ,RPT.[IdTestAB]
                         ,RPT.[LabelName]
                         ,RPT.[LabelColour]
-                ORDER BY RPT.[UTCScheduleDate] DESC
+                ORDER BY RPT.[UTCSentDate] DESC
                 OFFSET @pageNumber * @pageSize ROWS
                 FETCH NEXT @pageSize ROWS ONLY";
 
@@ -297,8 +297,8 @@ namespace Doppler.ReportingApi.Infrastructure
                     U.[Email] = @userName
                     AND C.[Status] IN (5,9)
                     AND C.Active = 1
-                    AND (@startDate IS NULL OR C.[UTCScheduleDate] >= @startDate)
-                    AND (@endDate IS NULL OR C.[UTCScheduleDate] < @endDate)
+                    AND (@startDate IS NULL OR C.[UTCSentDate] >= @startDate)
+                    AND (@endDate IS NULL OR C.[UTCSentDate] < @endDate)
                     AND (@campaignName IS NULL OR LOWER(LTRIM(RTRIM(C.[Name]))) LIKE '%' + LOWER(LTRIM(RTRIM(@campaignName))) + '%')
                     AND (
                             @campaignType IS NULL
@@ -335,8 +335,8 @@ namespace Doppler.ReportingApi.Infrastructure
 
                 SELECT
                     RPT.[IdUser]
-                    ,YEAR(dateadd(MINUTE, @timezone, UTCScheduleDate)) [Year]
-                    ,MONTH(dateadd(MINUTE, @timezone, UTCScheduleDate)) [Month]
+                    ,YEAR(dateadd(MINUTE, @timezone, UTCSentDate)) [Year]
+                    ,MONTH(dateadd(MINUTE, @timezone, UTCSentDate)) [Month]
                     ,COUNT(DISTINCT RPT.[IdCampaign]) [CampaginsCount]
                     ,SUM(RPT.[Subscribers]) [Subscribers]
                     ,SUM(RPT.[Sent]) [Sent]
@@ -378,7 +378,7 @@ namespace Doppler.ReportingApi.Infrastructure
                     SELECT
                         C.[IdUser]
                         ,C.[IdCampaign]
-                        ,C.[UTCScheduleDate]
+                        ,C.[UTCSentDate]
                         ,ISNULL(C.[AmountSentSubscribers],0) [Subscribers]
                         ,(ISNULL(C.AmountSentSubscribers, 0) - (ISNULL(C.HardBouncedMailCount, 0) + ISNULL(C.SoftBouncedMailCount, 0))) AS [Sent]
                         ,ISNULL(C.[DistinctOpenedMailCount],0) [Opens]
@@ -395,8 +395,8 @@ namespace Doppler.ReportingApi.Infrastructure
                         U.[Email] = @userName
                         AND C.[Status] IN (5,9)
                         AND C.Active = 1
-                        AND (@startDate IS NULL OR C.[UTCScheduleDate] >= @startDate)
-                        AND (@endDate IS NULL OR C.[UTCScheduleDate] < @endDate)
+                        AND (@startDate IS NULL OR C.[UTCSentDate] >= @startDate)
+                        AND (@endDate IS NULL OR C.[UTCSentDate] < @endDate)
                         AND C.[IdTestCampaign] IS NULL
                         AND C.[IdScheduledTask] IS NULL
                         AND (C.TestABCategory IS NULL OR C.TestABCategory = 3)
@@ -404,7 +404,7 @@ namespace Doppler.ReportingApi.Infrastructure
                     SELECT
                         S.[IdUser]
                         ,S.[IdCampaign]
-                        ,C.[UTCScheduleDate]
+                        ,C.[UTCSentDate]
                         ,0 [Subscribers]
                         ,0 [Sent]
                         ,0 [Opens]
@@ -435,8 +435,8 @@ namespace Doppler.ReportingApi.Infrastructure
                         U.[Email] = @userName
                         AND C.[Status] IN (5,9)
                         AND C.Active = 1
-                        AND (@startDate IS NULL OR C.[UTCScheduleDate] >= @startDate)
-                        AND (@endDate IS NULL OR C.[UTCScheduleDate] < @endDate)
+                        AND (@startDate IS NULL OR C.[UTCSentDate] >= @startDate)
+                        AND (@endDate IS NULL OR C.[UTCSentDate] < @endDate)
                         AND C.[IdTestCampaign] IS NULL
                         AND C.[IdScheduledTask] IS NULL
                         AND (C.TestABCategory IS NULL OR C.TestABCategory = 3)
@@ -445,13 +445,13 @@ namespace Doppler.ReportingApi.Infrastructure
                         S.[IdUser]
                         ,S.[IdCampaign]
                         ,C.[Name]
-                        ,C.[UTCScheduleDate]
+                        ,C.[UTCSentDate]
                         ,C.[FromEmail]
                         ,C.[CampaignType]
                 ) RPT
                 GROUP BY RPT.[IdUser]
-                        ,YEAR(dateadd(MINUTE, @timezone, UTCScheduleDate))
-                        ,MONTH(dateadd(MINUTE, @timezone, UTCScheduleDate))
+                        ,YEAR(dateadd(MINUTE, @timezone, UTCSentDate))
+                        ,MONTH(dateadd(MINUTE, @timezone, UTCSentDate))
 
                 ORDER BY [Year] DESC, [Month] DESC
                 OFFSET @pageNumber * @pageSize ROWS
@@ -472,8 +472,8 @@ namespace Doppler.ReportingApi.Infrastructure
                 FROM (
                     SELECT
                         C.[IdUser],
-                        YEAR(C.[UTCScheduleDate]) AS [Year],
-                        MONTH(C.[UTCScheduleDate]) AS [Month]
+                        YEAR(C.[UTCSentDate]) AS [Year],
+                        MONTH(C.[UTCSentDate]) AS [Month]
                     FROM [dbo].[Campaign] C WITH (NOLOCK)
                     JOIN [dbo].[User] U WITH (NOLOCK)
                         ON C.[IdUser] = U.[IdUser]
@@ -481,15 +481,15 @@ namespace Doppler.ReportingApi.Infrastructure
                         U.[Email] = @userName
                         AND C.[Status] IN (5,9)
                         AND C.Active = 1
-                        AND (@startDate IS NULL OR C.[UTCScheduleDate] >= @startDate)
-                        AND (@endDate IS NULL OR C.[UTCScheduleDate] < @endDate)
+                        AND (@startDate IS NULL OR C.[UTCSentDate] >= @startDate)
+                        AND (@endDate IS NULL OR C.[UTCSentDate] < @endDate)
                         AND C.[IdTestCampaign] IS NULL
                         AND C.[IdScheduledTask] IS NULL
                         AND (C.TestABCategory IS NULL OR C.TestABCategory = 3)
                     GROUP BY
                         C.[IdUser],
-                        YEAR(C.[UTCScheduleDate]),
-                        MONTH(C.[UTCScheduleDate])
+                        YEAR(C.[UTCSentDate]),
+                        MONTH(C.[UTCSentDate])
                 ) AS MonthlyGroups;";
 
                 var count = await connection.QuerySingleAsync<int>(dummyDatabaseQuery, new { userName, startDate, endDate });
