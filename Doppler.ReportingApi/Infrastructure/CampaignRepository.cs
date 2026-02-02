@@ -42,7 +42,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         C.[IdUser]
                         ,[IdCampaign]
                         ,CAST(
-                            DATEADD(MINUTE, @timezone, C.[UTCScheduleDate])
+                            DATEADD(MINUTE, @timezone, C.[UTCSentDate])
                             AS DATE
                         ) AS [Date]
                         ,COALESCE(C.[AmountSentSubscribers], C.[AmountSubscribersToSend], 0) AS [Sent]
@@ -62,7 +62,7 @@ namespace Doppler.ReportingApi.Infrastructure
                     WHERE
                         U.[Email] = @userName
                         AND C.[Status] IN (5,9,10)
-                        AND C.[UTCScheduleDate] BETWEEN @startDate AND @endDate
+                        AND C.[UTCSentDate] BETWEEN @startDate AND @endDate
                         AND C.[IdTestCampaign] IS NULL
                         AND C.[IdScheduledTask] IS NULL
                         AND C.Active = 1
@@ -71,7 +71,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         S.[IdUser]
                         ,S.[IdCampaign]
                         ,CAST(
-                            DATEADD(MINUTE, @timezone, C.[UTCScheduleDate])
+                            DATEADD(MINUTE, @timezone, C.[UTCSentDate])
                             AS DATE
                         ) AS [Date]
                         ,0 [Sent]
@@ -101,7 +101,7 @@ namespace Doppler.ReportingApi.Infrastructure
                     WHERE
                         U.[Email] = @userName
                         AND C.[Status] IN (5,9,10)
-                        AND C.[UTCScheduleDate] BETWEEN @startDate AND @endDate
+                        AND C.[UTCSentDate] BETWEEN @startDate AND @endDate
                         AND S.[IdSubscribersStatus] = 5
                         AND C.[IdTestCampaign] IS NULL
                         AND C.[IdScheduledTask] IS NULL
@@ -110,7 +110,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         S.[IdUser]
                         ,S.[IdCampaign]
                         ,CAST(
-                            DATEADD(MINUTE, @timezone, C.[UTCScheduleDate])
+                            DATEADD(MINUTE, @timezone, C.[UTCSentDate])
                             AS DATE
                         )
                 ) AS RPT
