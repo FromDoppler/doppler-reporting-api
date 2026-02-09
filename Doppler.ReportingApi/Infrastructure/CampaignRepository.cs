@@ -218,139 +218,30 @@ namespace Doppler.ReportingApi.Infrastructure
         {
             using (var connection = _connectionFactory.GetConnection())
             {
-                var dummyDatabaseQuery = @"
-                DECLARE @timezone INT
+                const string getIdUserSql = @"
+                SELECT TOP 1 U.IdUser
+                FROM dbo.[User] U WITH (NOLOCK)
+                WHERE U.[Email] = @userName;";
 
-                SELECT @timezone = offset
-                FROM dbo.usertimezone timezone
-                INNER JOIN dbo.[user] u ON u.idusertimezone = timezone.idusertimezone
-                WHERE u.[Email] = @userName
+                var idUser = await connection.QuerySingleOrDefaultAsync<int?>(getIdUserSql, new { userName });
 
-                SELECT
-                    RPT.[IdUser]
-                    ,YEAR(dateadd(MINUTE, @timezone, UTCSentDate)) [Year]
-                    ,MONTH(dateadd(MINUTE, @timezone, UTCSentDate)) [Month]
-                    ,COUNT(DISTINCT RPT.[IdCampaign]) [CampaginsCount]
-                    ,SUM(RPT.[Subscribers]) [Subscribers]
-                    ,SUM(RPT.[Sent]) [Sent]
-                    ,CASE
-                        WHEN SUM(RPT.[Subscribers]) = 0 THEN 0
-                        ELSE CAST(SUM(RPT.[Sent]) * 100.0 / SUM(RPT.[Subscribers]) AS DECIMAL(5,2))
-                    END AS [DlvRate]
-                    ,SUM(RPT.[Opens]) [Opens]
-                    ,CASE
-                        WHEN SUM(RPT.[Subscribers]) = 0 THEN 0
-                        ELSE CAST(SUM(RPT.[Opens]) * 100.0 / SUM(RPT.[Subscribers]) AS DECIMAL(5,2))
-                    END AS [OpenRate]
-                    ,SUM(RPT.[Unopens]) AS [Unopens]
-                    ,CASE
-                        WHEN SUM(RPT.[Subscribers]) = 0 THEN 0
-                        ELSE CAST(SUM(RPT.[Sent] - RPT.[Opens]) * 100.0 / SUM(RPT.[Subscribers]) AS DECIMAL(5,2))
-                    END AS [UnopenRate]
-                    ,SUM(RPT.[Clicks]) [Clicks]
-                    ,CASE
-                        WHEN SUM(RPT.[Opens]) = 0 THEN 0
-                        ELSE CAST(SUM(RPT.[Clicks]) * 100.0 / SUM(RPT.[Opens]) AS DECIMAL(5,2))
-                    END AS [ClickToOpenRate]
-                    ,SUM(RPT.[Hard] + RPT.[Soft]) [Bounces]
-                    ,CASE
-                        WHEN SUM(RPT.[Subscribers]) = 0 THEN 0
-                        ELSE CAST(SUM(RPT.[Hard] + RPT.[Soft]) * 100.0 / SUM(RPT.[Subscribers]) AS DECIMAL(5,2))
-                    END AS [BounceRate]
-                    ,SUM(RPT.[Unsubscribes]) [Unsubscribes]
-                    ,CASE
-                        WHEN SUM(RPT.[Sent]) = 0 THEN 0
-                        ELSE CAST(SUM(RPT.[Unsubscribes]) * 100.0 / SUM(RPT.[Sent]) AS DECIMAL(5,2))
-                    END AS [UnsubscribeRate]
-                    ,SUM(RPT.[Spam]) [Spam]
-                    ,CASE
-                        WHEN SUM(RPT.[Sent]) = 0 THEN 0
-                        ELSE CAST(SUM(RPT.[Spam]) * 100.0 / SUM(RPT.[Sent]) AS DECIMAL(5,2))
-                    END AS [SpamRate]
-                FROM(
-                    SELECT
-                        C.[IdUser]
-                        ,C.[IdCampaign]
-                        ,C.[UTCSentDate]
-                        ,ISNULL(C.[AmountSentSubscribers],0) [Subscribers]
-                        ,(ISNULL(C.AmountSentSubscribers, 0) - (ISNULL(C.HardBouncedMailCount, 0) + ISNULL(C.SoftBouncedMailCount, 0))) AS [Sent]
-                        ,ISNULL(C.[DistinctOpenedMailCount],0) [Opens]
-                        ,ISNULL(C.[UnopenedMailCount], 0) [Unopens]
-                        ,ISNULL(C.[DistinctClickCount],0) [Clicks]
-                        ,ISNULL(C.[HardBouncedMailCount],0) [Hard]
-                        ,ISNULL(C.[SoftBouncedMailCount],0) [Soft]
-                        ,ISNULL(C.[UnsubscriptionsCount],0) [Unsubscribes]
-                        ,0 [Spam]
-                    FROM [dbo].[Campaign] C WITH (NOLOCK)
-                    JOIN [dbo].[User] U WITH (NOLOCK)
-                        ON C.[IdUser] = U.[IdUser]
-                    WHERE
-                        U.[Email] = @userName
-                        AND C.[Status] IN (5,9)
-                        AND C.Active = 1
-                        AND (@startDate IS NULL OR C.[UTCSentDate] >= @startDate)
-                        AND (@endDate IS NULL OR C.[UTCSentDate] < @endDate)
-                        AND C.[IdTestCampaign] IS NULL
-                        AND C.[IdScheduledTask] IS NULL
-                        AND (C.TestABCategory IS NULL OR C.TestABCategory = 3)
-                    UNION ALL
-                    SELECT
-                        S.[IdUser]
-                        ,S.[IdCampaign]
-                        ,C.[UTCSentDate]
-                        ,0 [Subscribers]
-                        ,0 [Sent]
-                        ,0 [Opens]
-                        ,0 [Unopens]
-                        ,0 [Clicks]
-                        ,0 [Hard]
-                        ,0 [Soft]
-                        ,COUNT(
-                            CASE
-                                WHEN S.IdUnsubscriptionReason <> 2
-                                    AND S.UnsubscriptionSubreason NOT IN (2,3,4)
-                                THEN 1
-                            END
-                        ) [Unsubscribes]
-                        ,COUNT(
-                            CASE
-                                WHEN S.IdUnsubscriptionReason = 2
-                                    OR S.UnsubscriptionSubreason IN (2,3,4)
-                                THEN 1
-                            END
-                        ) [Spam]
-                    FROM [dbo].[Subscriber] S WITH (NOLOCK)
-                    JOIN [dbo].[Campaign] C WITH (NOLOCK)
-                        ON S.[IdUser] = C.[IdUser] AND S.[IdCampaign] = C.[IdCampaign]
-                    JOIN [dbo].[User] U WITH (NOLOCK)
-                        ON S.[IdUser] = U.[IdUser]
-                    WHERE
-                        U.[Email] = @userName
-                        AND C.[Status] IN (5,9)
-                        AND C.Active = 1
-                        AND (@startDate IS NULL OR C.[UTCSentDate] >= @startDate)
-                        AND (@endDate IS NULL OR C.[UTCSentDate] < @endDate)
-                        AND C.[IdTestCampaign] IS NULL
-                        AND C.[IdScheduledTask] IS NULL
-                        AND (C.TestABCategory IS NULL OR C.TestABCategory = 3)
-                        AND S.IdSubscribersStatus = 5
-                    GROUP BY
-                        S.[IdUser]
-                        ,S.[IdCampaign]
-                        ,C.[Name]
-                        ,C.[UTCSentDate]
-                        ,C.[FromEmail]
-                        ,C.[CampaignType]
-                ) RPT
-                GROUP BY RPT.[IdUser]
-                        ,YEAR(dateadd(MINUTE, @timezone, UTCSentDate))
-                        ,MONTH(dateadd(MINUTE, @timezone, UTCSentDate))
+                if (idUser == null)
+                {
+                    return new List<MonthlyCampaignMetrics>();
+                }
 
-                ORDER BY [Year] DESC, [Month] DESC
-                OFFSET @pageNumber * @pageSize ROWS
-                FETCH NEXT @pageSize ROWS ONLY";
-
-                var results = await connection.QueryAsync<MonthlyCampaignMetrics>(dummyDatabaseQuery, new { userName, pageNumber, pageSize, startDate, endDate });
+                var results = await connection.QueryAsync<MonthlyCampaignMetrics>(
+                    "[dbo].[CampaignsSent_CampaignsByMonthMetrics]",
+                    new
+                    {
+                        id = idUser.Value,
+                        startdate = startDate,
+                        enddate = endDate,
+                        pageNumber,
+                        pageSize
+                    },
+                    commandType: System.Data.CommandType.StoredProcedure
+                );
 
                 return results.ToList();
             }
