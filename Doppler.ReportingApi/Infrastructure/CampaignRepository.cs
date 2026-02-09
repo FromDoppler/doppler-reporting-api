@@ -137,18 +137,6 @@ namespace Doppler.ReportingApi.Infrastructure
         {
             using (var connection = _connectionFactory.GetConnection())
             {
-                string getIdUserSql = @"
-                    SELECT TOP 1 U.IdUser
-                    FROM dbo.[User] U WITH (NOLOCK)
-                    WHERE U.[Email] = @userName;";
-
-                var idUser = await connection.QuerySingleOrDefaultAsync<int?>(getIdUserSql, new { userName });
-
-                if (idUser == null)
-                {
-                    return new List<SentCampaignMetrics>();
-                }
-
                 var labelsStr = (labels != null && labels.Count > 0)
                     ? string.Join(",", labels)
                     : null;
@@ -157,7 +145,7 @@ namespace Doppler.ReportingApi.Infrastructure
                     "[dbo].[CampaignsSent_CampaignsMetrics]",
                     new
                     {
-                        id = idUser.Value,
+                        userName,
                         startdate = startDate,
                         enddate = endDate,
                         campaignName,
@@ -218,23 +206,11 @@ namespace Doppler.ReportingApi.Infrastructure
         {
             using (var connection = _connectionFactory.GetConnection())
             {
-                const string getIdUserSql = @"
-                SELECT TOP 1 U.IdUser
-                FROM dbo.[User] U WITH (NOLOCK)
-                WHERE U.[Email] = @userName;";
-
-                var idUser = await connection.QuerySingleOrDefaultAsync<int?>(getIdUserSql, new { userName });
-
-                if (idUser == null)
-                {
-                    return new List<MonthlyCampaignMetrics>();
-                }
-
                 var results = await connection.QueryAsync<MonthlyCampaignMetrics>(
                     "[dbo].[CampaignsSent_CampaignsByMonthMetrics]",
                     new
                     {
-                        id = idUser.Value,
+                        userName,
                         startdate = startDate,
                         enddate = endDate,
                         pageNumber,
