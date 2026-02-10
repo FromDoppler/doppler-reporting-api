@@ -20,9 +20,9 @@ namespace Doppler.ReportingApi.Models
         public string Name { get; set; }
 
         /// <summary>
-        /// UTC date and time when the campaign was scheduled to be sent.
+        /// UTC date and time when the campaign was sent.
         /// </summary>
-        public DateTime UTCScheduleDate { get; set; }
+        public DateTime UTCSentDate { get; set; }
 
         /// <summary>
         /// Email address used as the sender of the campaign.
