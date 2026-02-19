@@ -20,9 +20,9 @@ namespace Doppler.ReportingApi.Models
         public string Name { get; set; }
 
         /// <summary>
-        /// UTC date and time when the campaign was sent.
+        /// Date/time display in the campaign's sending timezone (e.g. "10/2/2026 16:43:48 PM (GMT-03:00)").
         /// </summary>
-        public DateTime UTCSentDate { get; set; }
+        public string SentDateDisplay { get; set; }
 
         /// <summary>
         /// Email address used as the sender of the campaign.
