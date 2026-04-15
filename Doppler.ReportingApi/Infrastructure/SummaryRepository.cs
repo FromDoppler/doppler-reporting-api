@@ -36,8 +36,8 @@ namespace Doppler.ReportingApi.Infrastructure
                     SUM(LinkInfo.UniqueClickCount) AS UniqueClickCount
                     FROM [user]
                         INNER JOIN Campaign WITH (NOLOCK) on [user].iduser = Campaign.IdUser
-						LEFT JOIN CampaignStats CS ON CS.IdCampaign = Campaign.IdCampaign
-						
+                        LEFT JOIN CampaignStats CS ON CS.IdCampaign = Campaign.IdCampaign
+                        
                     OUTER APPLY (
                         SELECT COUNT(DISTINCT LT.IdSubscriber) AS UniqueClickCount
                         FROM Link L WITH (NOLOCK)
