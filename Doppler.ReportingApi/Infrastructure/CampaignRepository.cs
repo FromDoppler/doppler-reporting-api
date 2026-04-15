@@ -53,7 +53,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         ,ISNULL(CS.[UnsubscriptionsCount],0) [Unsubscribes]
                         ,0 [Spam]
                     FROM [dbo].[Campaign] C WITH (NOLOCK)
-					LEFT JOIN dbo.CampaignStats CS ON CS.IdCampaign = C.IdCampaign
+                    LEFT JOIN dbo.CampaignStats CS ON CS.IdCampaign = C.IdCampaign
                     JOIN [dbo].[User] U WITH (NOLOCK)
                         ON C.[IdUser] = U.[IdUser]
                     WHERE
