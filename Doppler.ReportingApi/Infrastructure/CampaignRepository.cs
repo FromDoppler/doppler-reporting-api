@@ -40,7 +40,7 @@ namespace Doppler.ReportingApi.Infrastructure
                 FROM (
                     SELECT
                         C.[IdUser]
-                        ,[IdCampaign]
+                        ,C.[IdCampaign]
                         ,CAST(
                             DATEADD(MINUTE, @timezone, C.[UTCSentDate])
                             AS DATE
