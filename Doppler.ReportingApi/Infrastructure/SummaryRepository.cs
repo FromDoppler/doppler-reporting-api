@@ -87,6 +87,51 @@ namespace Doppler.ReportingApi.Infrastructure
             }
         }
 
+        public async Task<IEnumerable<SubscriberStatusStat>> GetSubscribersDashboardByUserAsync(
+            string userName,
+            DateTime startDate,
+            DateTime endDate)
+        {
+            using (var connection = _connectionFactory.GetConnection())
+            {
+                startDate = startDate.Date;
+                endDate = endDate.Date;
+
+                var query = @"
+                    DECLARE @idUser INT;
+
+                    SELECT @idUser = IdUser
+                    FROM [User]
+                    WHERE Email = @userName;
+
+                    SELECT
+                        StatsAt,
+                        NewSubscribers,
+                        ActiveSubscribers,
+                        InactiveDisableSubscribers,
+                        UnsubscribedByHardSubscribers,
+                        UnsubscribedBySoftSubscribers,
+                        UnsubscribedByNeverOpened,
+                        PendingSubscribers,
+                        UnsubscribedByClient,
+                        StandBySubscribers
+                    FROM SubscriberStatusStat
+                    WHERE IdUser = @idUser
+                        AND StatsAt BETWEEN @startDate AND @endDate
+                    ORDER BY StatsAt;
+                ";
+
+                return await connection.QueryAsync<SubscriberStatusStat>(
+                    query,
+                    new
+                    {
+                        userName,
+                        startDate,
+                        endDate
+                    });
+            }
+        }
+
         public async Task<SystemUsageSummary> GetSystemUsageAsync(string accountName)
         {
             using (var connection = _connectionFactory.GetConnection())

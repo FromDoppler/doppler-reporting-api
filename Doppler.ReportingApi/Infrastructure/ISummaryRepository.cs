@@ -1,5 +1,6 @@
 using Doppler.ReportingApi.Models;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Doppler.ReportingApi.Infrastructure
@@ -8,6 +9,7 @@ namespace Doppler.ReportingApi.Infrastructure
     {
         Task<CampaignsSummary> GetCampaignsSummaryByUserAsync(string userName, DateTime startDate, DateTime endDate);
         Task<SubscribersSummary> GetSubscribersSummaryByUserAsync(string userName, DateTime startDate, DateTime endDate);
+        Task<IEnumerable<SubscriberStatusStat>> GetSubscribersDashboardByUserAsync(string userName, DateTime startDate, DateTime endDate);
         Task<SystemUsageSummary> GetSystemUsageAsync(string accountName);
     }
 }
