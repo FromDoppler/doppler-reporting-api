@@ -118,7 +118,7 @@ namespace Doppler.ReportingApi.Infrastructure
                     FROM SubscriberStatusStat
                     WHERE IdUser = @idUser
                         AND StatsAt BETWEEN @startDate AND @endDate
-                    ORDER BY StatsAt;
+                    ORDER BY StatsAt DESC;
                 ";
 
                 return await connection.QueryAsync<SubscriberStatusStat>(
