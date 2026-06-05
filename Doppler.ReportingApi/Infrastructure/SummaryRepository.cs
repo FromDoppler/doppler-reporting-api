@@ -94,15 +94,18 @@ namespace Doppler.ReportingApi.Infrastructure
         {
             using (var connection = _connectionFactory.GetConnection())
             {
-                startDate = startDate.Date;
-                endDate = endDate.Date;
-
                 var query = @"
                     DECLARE @idUser INT;
+                    DECLARE @timezone INT;
 
                     SELECT @idUser = IdUser
                     FROM [User]
                     WHERE Email = @userName;
+
+                    SELECT @timezone = timezone.offset
+                    FROM dbo.usertimezone timezone
+                    INNER JOIN dbo.[User] u ON u.idusertimezone = timezone.idusertimezone
+                    WHERE u.[Email] = @userName;
 
                     SELECT
                         StatsAt,
@@ -117,7 +120,8 @@ namespace Doppler.ReportingApi.Infrastructure
                         StandBySubscribers
                     FROM SubscriberStatusStat
                     WHERE IdUser = @idUser
-                        AND StatsAt BETWEEN @startDate AND @endDate
+                        AND StatsAt >= CAST(DATEADD(MINUTE, @timezone, @startDate) AS DATE)
+                        AND StatsAt < CAST(DATEADD(MINUTE, @timezone, @endDate) AS DATE)
                     ORDER BY StatsAt DESC;
                 ";
 
