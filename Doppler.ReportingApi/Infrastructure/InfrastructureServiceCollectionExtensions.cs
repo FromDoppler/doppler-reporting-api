@@ -11,6 +11,7 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {
             services.AddScoped<IDatabaseConnectionFactory, DatabaseConnectionFactory>();
+            services.AddScoped<IDashboardRepository, DashboardRepository>();
             services.AddScoped<ISummaryRepository, SummaryRepository>();
             services.AddScoped<ICampaignRepository, CampaignRepository>();
             services.AddTransient<JwtSecurityTokenHandler>();
