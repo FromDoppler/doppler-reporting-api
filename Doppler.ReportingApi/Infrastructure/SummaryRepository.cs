@@ -87,6 +87,55 @@ namespace Doppler.ReportingApi.Infrastructure
             }
         }
 
+        public async Task<IEnumerable<SubscriberStatusStat>> GetSubscribersDashboardByUserAsync(
+            string userName,
+            DateTime startDate,
+            DateTime endDate)
+        {
+            using (var connection = _connectionFactory.GetConnection())
+            {
+                var query = @"
+                    DECLARE @idUser INT;
+                    DECLARE @timezone INT;
+
+                    SELECT @idUser = IdUser
+                    FROM [User]
+                    WHERE Email = @userName;
+
+                    SELECT @timezone = timezone.offset
+                    FROM dbo.usertimezone timezone
+                    INNER JOIN dbo.[User] u ON u.idusertimezone = timezone.idusertimezone
+                    WHERE u.[Email] = @userName;
+
+                    SELECT
+                        StatsAt,
+                        NewSubscribers,
+                        ActiveSubscribers,
+                        InactiveDisableSubscribers,
+                        UnsubscribedByHardSubscribers,
+                        UnsubscribedBySoftSubscribers,
+                        UnsubscribedByNeverOpened,
+                        PendingSubscribers,
+                        UnsubscribedByClient,
+                        StandBySubscribers
+                    FROM SubscriberStatusStat
+                    WHERE IdUser = @idUser
+                        AND StatsAt >= CAST(DATEADD(MINUTE, @timezone, @startDate) AS DATE)
+                        AND StatsAt < CAST(DATEADD(MINUTE, @timezone, @endDate) AS DATE)
+                    ORDER BY StatsAt DESC;
+                ";
+
+                return await connection.QueryAsync<SubscriberStatusStat>(
+                    query,
+                    new
+                    {
+                        userName,
+                        startDate,
+                        endDate
+                    });
+            }
+        }
+
         public async Task<SystemUsageSummary> GetSystemUsageAsync(string accountName)
         {
             using (var connection = _connectionFactory.GetConnection())
