@@ -15,6 +15,7 @@ using System.Reflection;
 using System.IO;
 using Doppler.ReportingApi.Infrastructure;
 using Doppler.ReportingApi.Authorization;
+using Doppler.ReportingApi.Services.PushContact;
 
 namespace Doppler.ReportingApi
 {
@@ -32,6 +33,7 @@ namespace Doppler.ReportingApi
         {
             services.Configure<DopplerDatabaseSettings>(Configuration.GetSection(nameof(DopplerDatabaseSettings)));
             services.Configure<JwtOptions>(Configuration.GetSection(nameof(JwtOptions)));
+            services.AddHttpClient<IPushContactSdk, PushContactSdk>();
             services.AddJwtToken();
             services.AddCors();
             services.AddProblemDetails();
