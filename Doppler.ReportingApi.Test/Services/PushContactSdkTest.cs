@@ -63,7 +63,7 @@ namespace Doppler.ReportingApi.Test.Services
                 {
                     Content = new StringContent("{\"error\":\"not-found\"}")
                 }));
-            
+
             var configuration = new ConfigurationBuilder()
                 .AddInMemoryCollection(new Dictionary<string, string>
                 {
