@@ -4,6 +4,7 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Doppler.ReportingApi.Models;
+using Doppler.ReportingApi.Services.SuperUserToken;
 using Microsoft.Extensions.Configuration;
 
 namespace Doppler.ReportingApi.Services.PushContact
@@ -17,22 +18,33 @@ namespace Doppler.ReportingApi.Services.PushContact
 
         private readonly HttpClient _httpClient;
         private readonly string _pushContactApiBaseUrl;
+        private readonly ISuperUserTokenService _superUserTokenService;
 
-        public PushContactSdk(HttpClient httpClient, IConfiguration configuration)
+        public PushContactSdk(
+            HttpClient httpClient,
+            IConfiguration configuration,
+            ISuperUserTokenService superUserTokenService)
         {
             _httpClient = httpClient;
-            _pushContactApiBaseUrl = BuildPushContactApiBaseUrl(configuration.GetValue<string>("BASEURL_PUSH_CONTACT"));
+            _superUserTokenService = superUserTokenService;
+            _pushContactApiBaseUrl = configuration.GetValue<string>("BASEURL_PUSH_CONTACT");
+
+            if (string.IsNullOrWhiteSpace(_pushContactApiBaseUrl))
+            {
+                throw new InvalidOperationException("BASEURL_PUSH_CONTACT configuration is required to call PushContact API.");
+            }
         }
 
         public async Task<DomainStatsPerDayModel> GetDomainStatsPerDayAsync(
             string name,
             DateTime startDate,
-            DateTime endDate,
-            string token)
+            DateTime endDate)
         {
+            var token = _superUserTokenService.GenerateToken();
+
             using var request = new HttpRequestMessage(
                 HttpMethod.Get,
-                $"{_pushContactApiBaseUrl}domains/{Uri.EscapeDataString(name)}/stats-per-day?startDate={Uri.EscapeDataString(startDate.ToString("o"))}&endDate={Uri.EscapeDataString(endDate.ToString("o"))}");
+                $"{_pushContactApiBaseUrl.TrimEnd('/')}/domains/{Uri.EscapeDataString(name)}/stats-per-day?startDate={Uri.EscapeDataString(startDate.ToString("o"))}&endDate={Uri.EscapeDataString(endDate.ToString("o"))}");
 
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
@@ -71,14 +83,5 @@ namespace Doppler.ReportingApi.Services.PushContact
             }
         }
 
-        private static string BuildPushContactApiBaseUrl(string pushContactApiBaseUrl)
-        {
-            if (string.IsNullOrWhiteSpace(pushContactApiBaseUrl))
-            {
-                throw new InvalidOperationException("BASEURL_PUSH_CONTACT configuration is required to call PushContact API.");
-            }
-
-            return pushContactApiBaseUrl + "/";
-        }
     }
 }

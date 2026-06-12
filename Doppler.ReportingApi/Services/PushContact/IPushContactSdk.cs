@@ -9,7 +9,6 @@ namespace Doppler.ReportingApi.Services.PushContact
         Task<DomainStatsPerDayModel> GetDomainStatsPerDayAsync(
             string name,
             DateTime startDate,
-            DateTime endDate,
-            string token);
+            DateTime endDate);
     }
 }
