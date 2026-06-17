@@ -18,7 +18,7 @@ COPY ./.config/dotnet-tools.json ./.config/
 # Take into account using the same name for the folder and the .csproj and only one folder level
 RUN for file in $(ls *.csproj); do mkdir -p ${file%.*}/ && mv $file ${file%.*}/; done
 RUN dotnet tool restore
-RUN ls 
+RUN ls
 RUN dotnet restore
 
 FROM restore AS build
