@@ -13,6 +13,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddScoped<IDatabaseConnectionFactory, DatabaseConnectionFactory>();
             services.AddScoped<ISummaryRepository, SummaryRepository>();
             services.AddScoped<ICampaignRepository, CampaignRepository>();
+            services.AddScoped<IDashboardRepository, DashboardRepository>();
             services.AddTransient<JwtSecurityTokenHandler>();
             services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
             services.AddScoped<ISuperUserTokenService, SuperUserTokenService>();
