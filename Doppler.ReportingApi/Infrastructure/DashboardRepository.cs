@@ -32,8 +32,8 @@ namespace Doppler.ReportingApi.Infrastructure
                     {
                         accountName,
                         campaignType,
-                        startDate = startDate.Date,
-                        endDate = endDate.Date,
+                        startDate = startDate,
+                        endDate = endDate,
                     },
                     commandType: CommandType.StoredProcedure);
             }
