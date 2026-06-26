@@ -167,6 +167,48 @@ namespace Doppler.ReportingApi.Infrastructure
 
         #endregion Email Campaign
 
+        #region Website Activity
+
+        public async Task<IEnumerable<WebsiteActivityRfmItem>> GetWebsiteActivityRfmAsync(string accountName)
+        {
+            using (var connection = _connectionFactory.GetConnection())
+            {
+                var query = @"
+                    SELECT
+                        SL.IdUser,
+                        S.IdSegment,
+                        SL.Name AS SegmentName,
+                        RFMS.IdRFMSegment,
+                        COUNT(SXL.IdSubscriber) AS SubscribersQty
+                    FROM dbo.[User] U
+                    INNER JOIN dbo.SubscribersList SL
+                        ON SL.IdUser = U.IdUser
+                    INNER JOIN dbo.Segment S
+                        ON S.IdSegment = SL.IdSubscribersList
+                    INNER JOIN dbo.[Filter] F
+                        ON F.IdFilter = S.IdFilter
+                    INNER JOIN dbo.RFMSegment RFMS
+                        ON RFMS.IdRFMSegment = F.IdRFMSegment
+                    LEFT JOIN dbo.SubscriberXList SXL
+                        ON SXL.IdSubscribersList = S.IdSegment
+                       AND SXL.Active = 1
+                    WHERE U.Email = @accountName
+                    GROUP BY
+                        SL.IdUser,
+                        S.IdSegment,
+                        SL.[Name],
+                        RFMS.IdRFMSegment,
+                        RFMS.[Name]
+                    ORDER BY SL.Name;";
+
+                return await connection.QueryAsync<WebsiteActivityRfmItem>(
+                    query,
+                    new { accountName });
+            }
+        }
+
+        #endregion Website Activity
+
         #endregion Home Dashboard
 
         public async Task<SystemUsageSummary> GetSystemUsageAsync(string accountName)

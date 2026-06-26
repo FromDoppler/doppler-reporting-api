@@ -132,6 +132,22 @@ namespace Doppler.ReportingApi.Controllers
 
         #endregion Email Campaign
 
+        #region Website Activity
+
+        [HttpGet]
+        [Route("{accountName}/dashboard/website-activity/rfm")]
+        [ProducesResponseType(typeof(IEnumerable<WebsiteActivityRfmItem>), 200)]
+        [Produces("application/json")]
+        [Authorize(Policies.OWN_RESOURCE_OR_SUPERUSER)]
+        public async Task<IActionResult> GetWebsiteActivityRfmDashboard(string accountName)
+        {
+            var result = await _summaryRepository.GetWebsiteActivityRfmAsync(accountName);
+
+            return new OkObjectResult(result);
+        }
+
+        #endregion Website Activity
+
         #endregion Home Dashboard
 
         /// <summary>

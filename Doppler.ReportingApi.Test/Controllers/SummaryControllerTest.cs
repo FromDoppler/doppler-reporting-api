@@ -194,5 +194,37 @@ namespace Doppler.ReportingApi.Controllers
             // Assert
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         }
+
+        [Fact]
+        public async Task Get_website_activity_rfm_dashboard_should_return_valid_response()
+        {
+            // Arrange
+            var userName = "test1@test.com";
+            var token = TestJwtTokenFactory.ValidAccount123Test1;
+            var mockConnection = new Mock<DbConnection>();
+
+            mockConnection
+                .SetupDapperAsync(c => c.QueryAsync<WebsiteActivityRfmItem>(It.IsAny<string>(), It.IsAny<object>(), null, null, null))
+                .ReturnsAsync(new List<WebsiteActivityRfmItem>());
+
+            var client = _factory.WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureTestServices(services =>
+                {
+                    services.SetupConnectionFactory(mockConnection.Object);
+                });
+            }).CreateClient(new WebApplicationFactoryClientOptions());
+
+            // Act
+            var response = await client.SendAsync(new HttpRequestMessage(
+                HttpMethod.Get,
+                $"/{userName}/dashboard/website-activity/rfm")
+            {
+                Headers = { { "Authorization", $"Bearer {token}" } }
+            });
+
+            // Assert
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
     }
 }
