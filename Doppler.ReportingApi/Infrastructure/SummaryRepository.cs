@@ -191,7 +191,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         ON RFMS.IdRFMSegment = F.IdRFMSegment
                     LEFT JOIN dbo.SubscriberXList SXL
                         ON SXL.IdSubscribersList = S.IdSegment
-                       AND SXL.Active = 1
+                        AND SXL.Active = 1
                     WHERE U.Email = @accountName
                     GROUP BY
                         SL.IdUser,
