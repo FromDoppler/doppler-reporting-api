@@ -87,6 +87,10 @@ namespace Doppler.ReportingApi.Infrastructure
             }
         }
 
+        #region Home Dashboard
+
+        #region Audience
+
         public async Task<IEnumerable<SubscriberStatusStat>> GetSubscribersDashboardByUserAsync(
             string userName,
             DateTime startDate,
@@ -135,6 +139,35 @@ namespace Doppler.ReportingApi.Infrastructure
                     });
             }
         }
+
+        #endregion Audience
+
+        #region Email Campaign
+
+        public async Task<IEnumerable<EmailCampaignDashboardItem>> GetEmailCampaignsAsync(
+            string accountName,
+            DateTime startDate,
+            DateTime endDate,
+            string campaignType)
+        {
+            using (var connection = _connectionFactory.GetConnection())
+            {
+                return await connection.QueryAsync<EmailCampaignDashboardItem>(
+                    "[dbo].[GetCampaignDailyStatsDashboard]",
+                    new
+                    {
+                        accountName,
+                        campaignType,
+                        startDate = startDate,
+                        endDate = endDate,
+                    },
+                    commandType: CommandType.StoredProcedure);
+            }
+        }
+
+        #endregion Email Campaign
+
+        #endregion Home Dashboard
 
         public async Task<SystemUsageSummary> GetSystemUsageAsync(string accountName)
         {

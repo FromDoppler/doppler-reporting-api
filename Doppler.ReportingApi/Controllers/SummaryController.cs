@@ -72,6 +72,10 @@ namespace Doppler.ReportingApi.Controllers
             return new OkObjectResult(result);
         }
 
+        #region Home Dashboard
+
+        #region Audience
+
         [HttpGet]
         [Route("{accountName}/dashboard/subscribers")]
         [ProducesResponseType(typeof(SubscriberStatusStat), 200)]
@@ -91,6 +95,44 @@ namespace Doppler.ReportingApi.Controllers
 
             return new OkObjectResult(result);
         }
+
+        #endregion Audience
+
+        #region Email Campaign
+
+        /// <summary>
+        /// Returns dashboard metrics for email campaigns by account and campaign type.
+        /// </summary>
+        /// <param name="accountName">User name.</param>
+        /// <param name="dateFilter">A basic date range filter.</param>
+        /// <param name="campaignType">Campaign type to filter.</param>
+        /// <remarks>Dates must be valid UtcTime with timezone.</remarks>
+        [HttpGet]
+        [Route("{accountName}/dashboard/email-campaigns")]
+        [ProducesResponseType(typeof(IEnumerable<EmailCampaignDashboardItem>), 200)]
+        [Produces("application/json")]
+        [Authorize(Policies.OWN_RESOURCE_OR_SUPERUSER)]
+        public async Task<IActionResult> GetEmailCampaignsDashboard(
+            string accountName,
+            [FromQuery] BasicDateFilter dateFilter,
+            [FromQuery] string campaignType)
+        {
+            if (!dateFilter.StartDate.HasValue || !dateFilter.EndDate.HasValue)
+            {
+                return new BadRequestObjectResult("StartDate and EndDate are required fields");
+            }
+
+            var startDate = dateFilter.StartDate.Value.UtcDateTime;
+            var endDate = dateFilter.EndDate.Value.UtcDateTime;
+
+            var result = await _summaryRepository.GetEmailCampaignsAsync(accountName, startDate, endDate, campaignType);
+
+            return new OkObjectResult(result);
+        }
+
+        #endregion Email Campaign
+
+        #endregion Home Dashboard
 
         /// <summary>
         /// Returns an object with info about the use of Doppler by a particular user
