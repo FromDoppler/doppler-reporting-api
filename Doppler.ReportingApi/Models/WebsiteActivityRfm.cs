@@ -1,6 +1,6 @@
 namespace Doppler.ReportingApi.Models
 {
-    public class WebsiteActivityRfmItem
+    public class WebsiteActivityRfm
     {
         public int IdUser { get; set; }
 
@@ -9,6 +9,8 @@ namespace Doppler.ReportingApi.Models
         public string SegmentName { get; set; }
 
         public int IdRFMSegment { get; set; }
+
+        public int RFMPeriod { get; set; }
 
         public int SubscribersQty { get; set; }
     }

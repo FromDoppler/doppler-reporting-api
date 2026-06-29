@@ -11,7 +11,7 @@ namespace Doppler.ReportingApi.Infrastructure
         Task<SubscribersSummary> GetSubscribersSummaryByUserAsync(string userName, DateTime startDate, DateTime endDate);
         Task<IEnumerable<SubscriberStatusStat>> GetSubscribersDashboardByUserAsync(string userName, DateTime startDate, DateTime endDate);
         Task<IEnumerable<EmailCampaignDashboardItem>> GetEmailCampaignsAsync(string accountName, DateTime startDate, DateTime endDate, string campaignType);
-        Task<IEnumerable<WebsiteActivityRfmItem>> GetWebsiteActivityRfmAsync(string accountName);
+        Task<IEnumerable<WebsiteActivityRfm>> GetWebsiteActivityRfmAsync(string accountName);
         Task<SystemUsageSummary> GetSystemUsageAsync(string accountName);
     }
 }

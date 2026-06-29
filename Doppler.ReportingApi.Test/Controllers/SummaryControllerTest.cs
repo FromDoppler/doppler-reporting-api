@@ -204,8 +204,8 @@ namespace Doppler.ReportingApi.Controllers
             var mockConnection = new Mock<DbConnection>();
 
             mockConnection
-                .SetupDapperAsync(c => c.QueryAsync<WebsiteActivityRfmItem>(It.IsAny<string>(), It.IsAny<object>(), null, null, null))
-                .ReturnsAsync(new List<WebsiteActivityRfmItem>());
+                .SetupDapperAsync(c => c.QueryAsync<WebsiteActivityRfm>(It.IsAny<string>(), It.IsAny<object>(), null, null, null))
+                .ReturnsAsync(new List<WebsiteActivityRfm>());
 
             var client = _factory.WithWebHostBuilder(builder =>
             {
