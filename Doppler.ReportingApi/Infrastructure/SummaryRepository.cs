@@ -169,7 +169,7 @@ namespace Doppler.ReportingApi.Infrastructure
 
         #region Website Activity
 
-        public async Task<IEnumerable<WebsiteActivityRfm>> GetWebsiteActivityRfmAsync(string accountName)
+        public async Task<WebsiteActivityRfmDashboard> GetWebsiteActivityRfmAsync(string accountName)
         {
             using (var connection = _connectionFactory.GetConnection())
             {
@@ -205,9 +205,23 @@ namespace Doppler.ReportingApi.Infrastructure
                         TPAU.RFMPeriod
                     ORDER BY RFMS.IdRFMSegment;";
 
-                return await connection.QueryAsync<WebsiteActivityRfm>(
+                var result = (await connection.QueryAsync<WebsiteActivityRfm>(
                     query,
-                    new { accountName });
+                    new { accountName }))
+                    .ToList();
+
+                return new WebsiteActivityRfmDashboard
+                {
+                    IdUser = result.FirstOrDefault()?.IdUser,
+                    RFMPeriod = result.FirstOrDefault()?.RFMPeriod,
+                    Segments = result.Select(x => new WebsiteActivityRfmSegment
+                    {
+                        IdSegment = x.IdSegment,
+                        SegmentName = x.SegmentName,
+                        IdRFMSegment = x.IdRFMSegment,
+                        SubscribersQty = x.SubscribersQty
+                    })
+                };
             }
         }
 

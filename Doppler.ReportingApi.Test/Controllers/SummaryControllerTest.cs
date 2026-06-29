@@ -12,6 +12,7 @@ using System.Data;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -205,7 +206,27 @@ namespace Doppler.ReportingApi.Controllers
 
             mockConnection
                 .SetupDapperAsync(c => c.QueryAsync<WebsiteActivityRfm>(It.IsAny<string>(), It.IsAny<object>(), null, null, null))
-                .ReturnsAsync(new List<WebsiteActivityRfm>());
+                .ReturnsAsync(new List<WebsiteActivityRfm>
+                {
+                    new WebsiteActivityRfm
+                    {
+                        IdUser = 126712,
+                        IdSegment = 45255205,
+                        SegmentName = "Clientes estrella",
+                        IdRFMSegment = 1,
+                        RFMPeriod = 120,
+                        SubscribersQty = 0
+                    },
+                    new WebsiteActivityRfm
+                    {
+                        IdUser = 126712,
+                        IdSegment = 45255204,
+                        SegmentName = "Clientes fieles",
+                        IdRFMSegment = 2,
+                        RFMPeriod = 120,
+                        SubscribersQty = 0
+                    }
+                });
 
             var client = _factory.WithWebHostBuilder(builder =>
             {
@@ -222,9 +243,16 @@ namespace Doppler.ReportingApi.Controllers
             {
                 Headers = { { "Authorization", $"Bearer {token}" } }
             });
+            var content = await response.Content.ReadAsStringAsync();
+            var json = JsonDocument.Parse(content);
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal(126712, json.RootElement.GetProperty("idUser").GetInt32());
+            Assert.Equal(120, json.RootElement.GetProperty("rfmPeriod").GetInt32());
+            Assert.Equal(2, json.RootElement.GetProperty("segments").GetArrayLength());
+            Assert.False(json.RootElement.GetProperty("segments")[0].TryGetProperty("idUser", out _));
+            Assert.False(json.RootElement.GetProperty("segments")[0].TryGetProperty("rfmPeriod", out _));
         }
     }
 }
