@@ -197,7 +197,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         SL.IdUser,
                         S.IdSegment,
                         SL.[Name],
-                        RFMS.IdRFMSegment,
+                        RFMS.IdRFMSegment
                     ORDER BY SL.Name;";
 
                 return await connection.QueryAsync<WebsiteActivityRfmItem>(
