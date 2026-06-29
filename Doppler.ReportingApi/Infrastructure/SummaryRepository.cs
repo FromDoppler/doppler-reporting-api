@@ -184,7 +184,7 @@ namespace Doppler.ReportingApi.Infrastructure
                     FROM dbo.[User] U
                     INNER JOIN dbo.ThirdPartyAppXUser TPAU
                         ON TPAU.IdUser = U.IdUser
-                       AND TPAU.RFMActive = 1
+                        AND TPAU.RFMActive = 1
                     INNER JOIN dbo.SubscribersList SL
                         ON SL.IdUser = U.IdUser
                     INNER JOIN dbo.Segment S
@@ -195,7 +195,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         ON RFMS.IdRFMSegment = F.IdRFMSegment
                     LEFT JOIN dbo.SubscriberXList SXL
                         ON SXL.IdSubscribersList = S.IdSegment
-                       AND SXL.Active = 1
+                        AND SXL.Active = 1
                     WHERE U.Email = @accountName
                     GROUP BY
                         SL.IdUser,
