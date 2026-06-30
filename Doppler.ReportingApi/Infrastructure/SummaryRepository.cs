@@ -186,6 +186,8 @@ namespace Doppler.ReportingApi.Infrastructure
                     INNER JOIN dbo.ThirdPartyAppXUser TPAU
                         ON TPAU.IdUser = U.IdUser
                         AND TPAU.RFMActive = 1
+                    INNER JOIN ThirdPartyApp TPA
+	                    ON TPA.IdThirdPartyApp = TPAU.IdThirdPartyApp
                     INNER JOIN dbo.SubscribersList SL
                         ON SL.IdUser = U.IdUser
                     INNER JOIN dbo.Segment S
