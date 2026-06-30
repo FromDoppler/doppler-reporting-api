@@ -9,6 +9,8 @@ namespace Doppler.ReportingApi.Models
 
         public int? RFMPeriod { get; set; }
 
+        public string IntegrationName { get; set; }
+
         public IEnumerable<WebsiteActivityRfmSegment> Segments { get; set; } = Array.Empty<WebsiteActivityRfmSegment>();
     }
 }

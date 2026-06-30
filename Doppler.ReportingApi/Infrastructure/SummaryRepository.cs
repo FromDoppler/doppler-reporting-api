@@ -178,6 +178,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         SL.IdUser,
                         S.IdSegment,
                         SL.Name AS SegmentName,
+                        TPA.Name AS IntegrationName,
                         RFMS.IdRFMSegment,
                         TPAU.RFMPeriod,
                         COUNT(SXL.IdSubscriber) AS SubscribersQty
@@ -201,6 +202,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         SL.IdUser,
                         S.IdSegment,
                         SL.[Name],
+                        TPA.[Name],
                         RFMS.IdRFMSegment,
                         TPAU.RFMPeriod
                     ORDER BY RFMS.IdRFMSegment;";
@@ -214,6 +216,7 @@ namespace Doppler.ReportingApi.Infrastructure
                 {
                     IdUser = result.FirstOrDefault()?.IdUser,
                     RFMPeriod = result.FirstOrDefault()?.RFMPeriod,
+                    IntegrationName = result.FirstOrDefault().SegmentName,
                     Segments = result.Select(x => new WebsiteActivityRfmSegment
                     {
                         IdSegment = x.IdSegment,
