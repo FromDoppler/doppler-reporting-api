@@ -8,6 +8,8 @@ namespace Doppler.ReportingApi.Models
 
         public string SegmentName { get; set; }
 
+        public string IntegrationName { get; set; }
+
         public int IdRFMSegment { get; set; }
 
         public int RFMPeriod { get; set; }

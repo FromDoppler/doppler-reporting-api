@@ -213,6 +213,7 @@ namespace Doppler.ReportingApi.Controllers
                         IdUser = 126712,
                         IdSegment = 45255205,
                         SegmentName = "Clientes estrella",
+                        IntegrationName = "Shopify",
                         IdRFMSegment = 1,
                         RFMPeriod = 120,
                         SubscribersQty = 0
@@ -222,6 +223,7 @@ namespace Doppler.ReportingApi.Controllers
                         IdUser = 126712,
                         IdSegment = 45255204,
                         SegmentName = "Clientes fieles",
+                        IntegrationName = "Shopify",
                         IdRFMSegment = 2,
                         RFMPeriod = 120,
                         SubscribersQty = 0
@@ -250,9 +252,48 @@ namespace Doppler.ReportingApi.Controllers
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             Assert.Equal(126712, json.RootElement.GetProperty("idUser").GetInt32());
             Assert.Equal(120, json.RootElement.GetProperty("rfmPeriod").GetInt32());
+            Assert.Equal("Shopify", json.RootElement.GetProperty("integrationName").GetString());
             Assert.Equal(2, json.RootElement.GetProperty("segments").GetArrayLength());
             Assert.False(json.RootElement.GetProperty("segments")[0].TryGetProperty("idUser", out _));
             Assert.False(json.RootElement.GetProperty("segments")[0].TryGetProperty("rfmPeriod", out _));
+        }
+
+        [Fact]
+        public async Task Get_website_activity_rfm_should_return_empty_segments_when_no_data()
+        {
+            // Arrange
+            var userName = "test1@test.com";
+            var token = TestJwtTokenFactory.ValidAccount123Test1;
+            var mockConnection = new Mock<DbConnection>();
+
+            mockConnection
+                .SetupDapperAsync(c => c.QueryAsync<WebsiteActivityRfm>(It.IsAny<string>(), It.IsAny<object>(), null, null, null))
+                .ReturnsAsync(Enumerable.Empty<WebsiteActivityRfm>());
+
+            var client = _factory.WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureTestServices(services =>
+                {
+                    services.SetupConnectionFactory(mockConnection.Object);
+                });
+            }).CreateClient(new WebApplicationFactoryClientOptions());
+
+            // Act
+            var response = await client.SendAsync(new HttpRequestMessage(
+                HttpMethod.Get,
+                $"/{userName}/dashboard/website-activity/rfm")
+            {
+                Headers = { { "Authorization", $"Bearer {token}" } }
+            });
+            var content = await response.Content.ReadAsStringAsync();
+            var json = JsonDocument.Parse(content);
+
+            // Assert
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal(0, json.RootElement.GetProperty("segments").GetArrayLength());
+            Assert.True(json.RootElement.GetProperty("idUser").ValueKind == JsonValueKind.Null);
+            Assert.True(json.RootElement.GetProperty("rfmPeriod").ValueKind == JsonValueKind.Null);
+            Assert.True(json.RootElement.GetProperty("integrationName").ValueKind == JsonValueKind.Null);
         }
     }
 }

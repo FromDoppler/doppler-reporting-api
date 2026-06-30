@@ -214,11 +214,13 @@ namespace Doppler.ReportingApi.Infrastructure
                     new { accountName }))
                     .ToList();
 
+                var firstResult = result.FirstOrDefault();
+
                 return new WebsiteActivityRfmDashboard
                 {
-                    IdUser = result.FirstOrDefault()?.IdUser,
-                    RFMPeriod = result.FirstOrDefault()?.RFMPeriod,
-                    IntegrationName = result.FirstOrDefault().SegmentName,
+                    IdUser = firstResult?.IdUser,
+                    RFMPeriod = firstResult?.RFMPeriod,
+                    IntegrationName = firstResult?.IntegrationName,
                     Segments = result.Select(x => new WebsiteActivityRfmSegment
                     {
                         IdSegment = x.IdSegment,
