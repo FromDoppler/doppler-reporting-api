@@ -178,6 +178,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         SL.IdUser,
                         S.IdSegment,
                         SL.Name AS SegmentName,
+                        TPA.IdThirdPartyApp,
                         TPA.Name AS IntegrationName,
                         RFMS.IdRFMSegment,
                         TPAU.RFMPeriod,
@@ -204,6 +205,7 @@ namespace Doppler.ReportingApi.Infrastructure
                         SL.IdUser,
                         S.IdSegment,
                         SL.[Name],
+                        TPA.IdThirdPartyApp,
                         TPA.[Name],
                         RFMS.IdRFMSegment,
                         TPAU.RFMPeriod
@@ -220,6 +222,7 @@ namespace Doppler.ReportingApi.Infrastructure
                 {
                     IdUser = firstResult?.IdUser,
                     RFMPeriod = firstResult?.RFMPeriod,
+                    IdThirdPartyApp = firstResult?.IdThirdPartyApp,
                     IntegrationName = firstResult?.IntegrationName,
                     Segments = result.Select(x => new WebsiteActivityRfmSegment
                     {
