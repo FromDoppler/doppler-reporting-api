@@ -167,6 +167,76 @@ namespace Doppler.ReportingApi.Infrastructure
 
         #endregion Email Campaign
 
+        #region Website Activity
+
+        public async Task<WebsiteActivityRfmDashboard> GetWebsiteActivityRfmAsync(string accountName)
+        {
+            using (var connection = _connectionFactory.GetConnection())
+            {
+                var query = @"
+                    SELECT
+                        SL.IdUser,
+                        S.IdSegment,
+                        SL.Name AS SegmentName,
+                        TPA.IdThirdPartyApp,
+                        TPA.Name AS IntegrationName,
+                        RFMS.IdRFMSegment,
+                        TPAU.RFMPeriod,
+                        COUNT(SXL.IdSubscriber) AS SubscribersQty
+                    FROM dbo.[User] U
+                    INNER JOIN dbo.ThirdPartyAppXUser TPAU
+                        ON TPAU.IdUser = U.IdUser
+                        AND TPAU.RFMActive = 1
+                    INNER JOIN ThirdPartyApp TPA
+                        ON TPA.IdThirdPartyApp = TPAU.IdThirdPartyApp
+                    INNER JOIN dbo.SubscribersList SL
+                        ON SL.IdUser = U.IdUser
+                    INNER JOIN dbo.Segment S
+                        ON S.IdSegment = SL.IdSubscribersList
+                    INNER JOIN dbo.[Filter] F
+                        ON F.IdFilter = S.IdFilter
+                    INNER JOIN dbo.RFMSegment RFMS
+                        ON RFMS.IdRFMSegment = F.IdRFMSegment
+                    LEFT JOIN dbo.SubscriberXList SXL
+                        ON SXL.IdSubscribersList = S.IdSegment
+                        AND SXL.Active = 1
+                    WHERE U.Email = @accountName
+                    GROUP BY
+                        SL.IdUser,
+                        S.IdSegment,
+                        SL.[Name],
+                        TPA.IdThirdPartyApp,
+                        TPA.[Name],
+                        RFMS.IdRFMSegment,
+                        TPAU.RFMPeriod
+                    ORDER BY RFMS.IdRFMSegment;";
+
+                var result = (await connection.QueryAsync<WebsiteActivityRfm>(
+                    query,
+                    new { accountName }))
+                    .ToList();
+
+                var firstResult = result.FirstOrDefault();
+
+                return new WebsiteActivityRfmDashboard
+                {
+                    IdUser = firstResult?.IdUser,
+                    RFMPeriod = firstResult?.RFMPeriod,
+                    IdThirdPartyApp = firstResult?.IdThirdPartyApp,
+                    IntegrationName = firstResult?.IntegrationName,
+                    Segments = result.Select(x => new WebsiteActivityRfmSegment
+                    {
+                        IdSegment = x.IdSegment,
+                        SegmentName = x.SegmentName,
+                        IdRFMSegment = x.IdRFMSegment,
+                        SubscribersQty = x.SubscribersQty
+                    })
+                };
+            }
+        }
+
+        #endregion Website Activity
+
         #endregion Home Dashboard
 
         public async Task<SystemUsageSummary> GetSystemUsageAsync(string accountName)
