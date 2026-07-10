@@ -87,6 +87,53 @@ namespace Doppler.ReportingApi.Infrastructure
             }
         }
 
+        public async Task<IEnumerable<AssistedSalesSummaryItem>> GetAssistedSalesAsync(
+            string accountName,
+            DateTime startDate,
+            DateTime endDate)
+        {
+            using (var connection = _connectionFactory.GetConnection())
+            {
+                var query = @"
+                    DECLARE @idUser INT;
+                    DECLARE @timezone INT;
+
+                    SELECT @idUser = IdUser
+                    FROM [User]
+                    WHERE Email = @accountName;
+
+                    SELECT @timezone = timezone.offset
+                    FROM dbo.usertimezone timezone
+                    INNER JOIN dbo.[User] u ON u.idusertimezone = timezone.idusertimezone
+                    WHERE u.[Email] = @accountName;
+
+                    SELECT
+                        TPODS.IdUser,
+                        TPODS.IdThirdPartyApp,
+                        TPODS.StatsAt,
+                        TPODS.OrdersAmount,
+                        TPODS.AssistedOrderAmount,
+                        TPODS.OrdersTotal,
+                        TPODS.AssistedOrdersTotal,
+                        TPODS.Currency,
+                        TPODS.UTCAddedDate
+                    FROM [datastudio].[ThirdPartyAppOrdersDailyStat] TPODS
+                    WHERE TPODS.IdUser = @idUser
+                        AND TPODS.StatsAt >= CAST(DATEADD(MINUTE, @timezone, @startDate) AS DATE)
+                        AND TPODS.StatsAt < CAST(DATEADD(MINUTE, @timezone, @endDate) AS DATE)
+                    ORDER BY TPODS.StatsAt DESC, TPODS.IdThirdPartyApp;";
+
+                return await connection.QueryAsync<AssistedSalesSummaryItem>(
+                    query,
+                    new
+                    {
+                        accountName,
+                        startDate,
+                        endDate
+                    });
+            }
+        }
+
         #region Home Dashboard
 
         #region Audience

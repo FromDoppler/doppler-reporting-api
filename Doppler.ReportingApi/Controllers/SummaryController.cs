@@ -72,6 +72,31 @@ namespace Doppler.ReportingApi.Controllers
             return new OkObjectResult(result);
         }
 
+        /// <summary>
+        /// Return assisted sales stats for an user
+        /// </summary>
+        /// <param name="accountName">User name</param>
+        /// <param name="dateFilter">A basic date range filter </param>
+        /// <remarks>Dates must be valid UtcTime with timezone</remarks>
+        [HttpGet]
+        [Route("{accountName}/summary/assistedsales")]
+        [ProducesResponseType(typeof(IEnumerable<AssistedSalesSummaryItem>), 200)]
+        [Produces("application/json")]
+        [Authorize(Policies.OWN_RESOURCE_OR_SUPERUSER)]
+        public async Task<IActionResult> GetAssistedSales(string accountName, [FromQuery] BasicDateFilter dateFilter)
+        {
+            if (!dateFilter.StartDate.HasValue || !dateFilter.EndDate.HasValue)
+            {
+                return new BadRequestObjectResult("StartDate and EndDate are required fields");
+            }
+
+            var startDate = dateFilter.StartDate.Value.UtcDateTime;
+            var endDate = dateFilter.EndDate.Value.UtcDateTime;
+            var result = await _summaryRepository.GetAssistedSalesAsync(accountName, startDate, endDate);
+
+            return new OkObjectResult(result);
+        }
+
         #region Home Dashboard
 
         #region Audience
