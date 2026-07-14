@@ -103,6 +103,44 @@ namespace Doppler.ReportingApi.Controllers
         }
 
         [Fact]
+        public async Task Get_summary_assistedsales_should_return_valid_response()
+        {
+            // Arrange
+            var userName = "test1@test.com";
+            var token = TestJwtTokenFactory.ValidAccount123Test1;
+            var mockConnection = new Mock<DbConnection>();
+
+            mockConnection
+                .SetupDapperAsync(c => c.QueryAsync<AssistedSalesSummaryItem>(It.IsAny<string>(), It.IsAny<object>(), null, null, null))
+                .ReturnsAsync(Enumerable.Empty<AssistedSalesSummaryItem>());
+
+            var client = _factory.WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureTestServices(services =>
+                {
+                    services.SetupConnectionFactory(mockConnection.Object);
+                });
+
+            }).CreateClient(new WebApplicationFactoryClientOptions());
+
+            var startDate = DateTime.Today.AddDays(-30);
+            var endDate = DateTime.Today;
+            var request = new HttpRequestMessage(HttpMethod.Get, $"/{userName}/summary/assistedsales?startDate={startDate.ToLongDateString()}&endDate={endDate.ToLongTimeString()}")
+            {
+                Headers = { { "Authorization", $"Bearer {token}" } }
+            };
+
+            // Act
+            var response = await client.SendAsync(request);
+            var content = await response.Content.ReadAsStringAsync();
+
+            // Assert
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal("application/json", response.Content.Headers.ContentType.MediaType);
+            Assert.NotNull(content);
+        }
+
+        [Fact]
         public async Task Get_system_usage_should_return_valid_response()
         {
             // Arrange
