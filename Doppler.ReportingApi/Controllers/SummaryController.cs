@@ -18,7 +18,9 @@ namespace Doppler.ReportingApi.Controllers
         private readonly ILogger _logger;
         private readonly ISummaryRepository _summaryRepository;
 
-        public SummaryController(ILogger<SummaryController> logger, ISummaryRepository summaryRepository)
+        public SummaryController(
+            ILogger<SummaryController> logger,
+            ISummaryRepository summaryRepository)
         {
             _logger = logger;
             _summaryRepository = summaryRepository;
@@ -117,6 +119,26 @@ namespace Doppler.ReportingApi.Controllers
             var endDate = dateFilter.EndDate.Value.UtcDateTime;
 
             var result = await _summaryRepository.GetSubscribersDashboardByUserAsync(accountName, startDate, endDate);
+
+            return new OkObjectResult(result);
+        }
+
+        [HttpGet]
+        [Route("{accountName}/dashboard/subscribers/sources")]
+        [ProducesResponseType(typeof(IEnumerable<SourceWithSubscribersCount>), 200)]
+        [Produces("application/json")]
+        [Authorize(Policies.OWN_RESOURCE_OR_SUPERUSER)]
+        public async Task<IActionResult> GetSourcesWithSubscribersCount(string accountName, [FromQuery] BasicDateFilter dateFilter)
+        {
+            if (!dateFilter.StartDate.HasValue || !dateFilter.EndDate.HasValue)
+            {
+                return new BadRequestObjectResult("StartDate and EndDate are required fields");
+            }
+
+            var startDate = dateFilter.StartDate.Value.UtcDateTime;
+            var endDate = dateFilter.EndDate.Value.UtcDateTime;
+
+            var result = await _summaryRepository.GetSourcesWithSubscribersCountAsync(accountName, startDate, endDate);
 
             return new OkObjectResult(result);
         }

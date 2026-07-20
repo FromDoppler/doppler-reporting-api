@@ -187,6 +187,48 @@ namespace Doppler.ReportingApi.Infrastructure
             }
         }
 
+        public Task<IEnumerable<SourceWithSubscribersCount>> GetSourcesWithSubscribersCountAsync(
+            string accountName,
+            DateTime startDate,
+            DateTime endDate)
+        {
+            IEnumerable<SourceWithSubscribersCount> result = new[]
+            {
+                new SourceWithSubscribersCount { Source = "Manual", Amount = 12 },
+                new SourceWithSubscribersCount { Source = "Importado", Amount = 340 },
+                new SourceWithSubscribersCount { Source = "Formulario", Amount = 58 },
+                new SourceWithSubscribersCount { Source = "MercadoShops", Amount = 1024 },
+                new SourceWithSubscribersCount { Source = "RestAPI", Amount = 7 },
+                new SourceWithSubscribersCount { Source = "TokkoBroker", Amount = 215 },
+                new SourceWithSubscribersCount { Source = "Tiendanube", Amount = 100 },
+                new SourceWithSubscribersCount { Source = "DataHub", Amount = 4321 },
+                new SourceWithSubscribersCount { Source = "VTEX", Amount = 89 },
+                new SourceWithSubscribersCount { Source = "Shopify", Amount = 15678 },
+                new SourceWithSubscribersCount { Source = "Magento", Amount = 245 },
+                new SourceWithSubscribersCount { Source = "Wordpress", Amount = 31 },
+                new SourceWithSubscribersCount { Source = "Unbounce", Amount = 908 },
+                new SourceWithSubscribersCount { Source = "PrestaShop", Amount = 67 },
+                new SourceWithSubscribersCount { Source = "WooCommerce", Amount = 5400 },
+                new SourceWithSubscribersCount { Source = "LearnPress", Amount = 14 },
+                new SourceWithSubscribersCount { Source = "CRM2go", Amount = 2750 },
+                new SourceWithSubscribersCount { Source = "Zoho", Amount = 620 },
+                new SourceWithSubscribersCount { Source = "PieSync", Amount = 45 },
+                new SourceWithSubscribersCount { Source = "Easycommerce", Amount = 1330 },
+                new SourceWithSubscribersCount { Source = "ELAGestion", Amount = 26 },
+                new SourceWithSubscribersCount { Source = "BMW RSP CRM", Amount = 9999 },
+                new SourceWithSubscribersCount { Source = "MiTienda", Amount = 73 },
+                new SourceWithSubscribersCount { Source = "TiendUp", Amount = 1840 },
+                new SourceWithSubscribersCount { Source = "Jumpseller", Amount = 52 },
+                new SourceWithSubscribersCount { Source = "Conversaciones", Amount = 410 },
+                new SourceWithSubscribersCount { Source = "Landing Page", Amount = 3050 },
+                new SourceWithSubscribersCount { Source = "Empretienda", Amount = 120 },
+                new SourceWithSubscribersCount { Source = "OnSite", Amount = 8700 },
+                new SourceWithSubscribersCount { Source = "TiendaNegocio", Amount = 5 },
+            };
+
+            return Task.FromResult(result);
+        }
+
         #endregion Audience
 
         #region Email Campaign
