@@ -1,8 +1,10 @@
 using Dapper;
 using Doppler.ReportingApi.Models;
+using Doppler.ReportingApi.Services.PushContact;
 using Doppler.ReportingApi.Test.Utils;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Moq.Dapper;
 using System;
@@ -39,14 +41,7 @@ namespace Doppler.ReportingApi.Controllers
                 .SetupDapperAsync(c => c.QueryAsync<CampaignsSummary>(It.IsAny<string>(), It.IsAny<object>(), null, null, null))
                 .ReturnsAsync(Enumerable.Empty<CampaignsSummary>());
 
-            var client = _factory.WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureTestServices(services =>
-                {
-                    services.SetupConnectionFactory(mockConnection.Object);
-                });
-
-            }).CreateClient(new WebApplicationFactoryClientOptions());
+            var client = CreateClient(mockConnection);
 
             var startDate = DateTime.Today.AddDays(-30);
             var endDate = DateTime.Today;
@@ -77,14 +72,7 @@ namespace Doppler.ReportingApi.Controllers
                 .SetupDapperAsync(c => c.QueryAsync<SubscribersSummary>(It.IsAny<string>(), It.IsAny<object>(), null, null, null))
                 .ReturnsAsync(Enumerable.Empty<SubscribersSummary>());
 
-            var client = _factory.WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureTestServices(services =>
-                {
-                    services.SetupConnectionFactory(mockConnection.Object);
-                });
-
-            }).CreateClient(new WebApplicationFactoryClientOptions());
+            var client = CreateClient(mockConnection);
 
             var startDate = DateTime.Today.AddDays(-30);
             var endDate = DateTime.Today;
@@ -114,14 +102,7 @@ namespace Doppler.ReportingApi.Controllers
                 .SetupDapperAsync(c => c.QueryAsync<AssistedSalesSummaryItem>(It.IsAny<string>(), It.IsAny<object>(), null, null, null))
                 .ReturnsAsync(Enumerable.Empty<AssistedSalesSummaryItem>());
 
-            var client = _factory.WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureTestServices(services =>
-                {
-                    services.SetupConnectionFactory(mockConnection.Object);
-                });
-
-            }).CreateClient(new WebApplicationFactoryClientOptions());
+            var client = CreateClient(mockConnection);
 
             var startDate = DateTime.Today.AddDays(-30);
             var endDate = DateTime.Today;
@@ -152,14 +133,7 @@ namespace Doppler.ReportingApi.Controllers
                 .SetupDapperAsync(c => c.QueryAsync<SystemUsageSummary>(It.IsAny<string>(), It.IsAny<object>(), null, null, null))
                 .ReturnsAsync(Enumerable.Empty<SystemUsageSummary>());
 
-            var client = _factory.WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureTestServices(services =>
-                {
-                    services.SetupConnectionFactory(mockConnection.Object);
-                });
-
-            }).CreateClient(new WebApplicationFactoryClientOptions());
+            var client = CreateClient(mockConnection);
 
             // Act
             var request = new HttpRequestMessage(HttpMethod.Get, $"/{userName}/summary/system-usage")
@@ -186,13 +160,7 @@ namespace Doppler.ReportingApi.Controllers
                 .SetupDapperAsync(c => c.QueryAsync<EmailCampaignDashboardItem>(It.IsAny<string>(), It.IsAny<object>(), null, null, It.IsAny<CommandType?>()))
                 .ReturnsAsync(new List<EmailCampaignDashboardItem>());
 
-            var client = _factory.WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureTestServices(services =>
-                {
-                    services.SetupConnectionFactory(mockConnection.Object);
-                });
-            }).CreateClient(new WebApplicationFactoryClientOptions());
+            var client = CreateClient(mockConnection);
 
             // Act
             var response = await client.SendAsync(new HttpRequestMessage(
@@ -214,13 +182,7 @@ namespace Doppler.ReportingApi.Controllers
             var token = TestJwtTokenFactory.ValidAccount123Test1;
             var mockConnection = new Mock<DbConnection>();
 
-            var client = _factory.WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureTestServices(services =>
-                {
-                    services.SetupConnectionFactory(mockConnection.Object);
-                });
-            }).CreateClient(new WebApplicationFactoryClientOptions());
+            var client = CreateClient(mockConnection);
 
             // Act
             var response = await client.SendAsync(new HttpRequestMessage(
@@ -268,13 +230,7 @@ namespace Doppler.ReportingApi.Controllers
                     }
                 });
 
-            var client = _factory.WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureTestServices(services =>
-                {
-                    services.SetupConnectionFactory(mockConnection.Object);
-                });
-            }).CreateClient(new WebApplicationFactoryClientOptions());
+            var client = CreateClient(mockConnection);
 
             // Act
             var response = await client.SendAsync(new HttpRequestMessage(
@@ -308,13 +264,7 @@ namespace Doppler.ReportingApi.Controllers
                 .SetupDapperAsync(c => c.QueryAsync<WebsiteActivityRfm>(It.IsAny<string>(), It.IsAny<object>(), null, null, null))
                 .ReturnsAsync(Enumerable.Empty<WebsiteActivityRfm>());
 
-            var client = _factory.WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureTestServices(services =>
-                {
-                    services.SetupConnectionFactory(mockConnection.Object);
-                });
-            }).CreateClient(new WebApplicationFactoryClientOptions());
+            var client = CreateClient(mockConnection);
 
             // Act
             var response = await client.SendAsync(new HttpRequestMessage(
@@ -332,6 +282,22 @@ namespace Doppler.ReportingApi.Controllers
             Assert.True(json.RootElement.GetProperty("idUser").ValueKind == JsonValueKind.Null);
             Assert.True(json.RootElement.GetProperty("rfmPeriod").ValueKind == JsonValueKind.Null);
             Assert.True(json.RootElement.GetProperty("integrationName").ValueKind == JsonValueKind.Null);
+        }
+
+        private HttpClient CreateClient(
+            Mock<DbConnection> mockConnection,
+            Mock<IPushContactService> mockPushContactService = null)
+        {
+            mockPushContactService ??= new Mock<IPushContactService>();
+
+            return _factory.WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureTestServices(services =>
+                {
+                    services.SetupConnectionFactory(mockConnection.Object);
+                    services.AddSingleton(mockPushContactService.Object);
+                });
+            }).CreateClient(new WebApplicationFactoryClientOptions());
         }
     }
 }
