@@ -91,8 +91,8 @@ namespace Doppler.ReportingApi.Services.PushContact
             DateTime endDate,
             IEnumerable<string> domains)
         {
-            var from = new DateTimeOffset(DateTime.SpecifyKind(startDate, DateTimeKind.Utc));
-            var to = new DateTimeOffset(DateTime.SpecifyKind(endDate, DateTimeKind.Utc));
+            var from = startDate;
+            var to = endDate;
             var items = new List<PushNotificationDashboardKpiItemModel>
             {
                 new PushNotificationDashboardKpiItemModel
