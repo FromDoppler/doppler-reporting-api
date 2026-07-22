@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json;
@@ -81,6 +83,83 @@ namespace Doppler.ReportingApi.Services.PushContact
             {
                 throw new PushContactApiCommunicationException("PushContact API returned an invalid response body.", exception);
             }
+        }
+
+        public Task<IEnumerable<PushNotificationDashboardKpiDataModel>> GetPushNotificationDashboardKpiData(
+            string accountName,
+            DateTime startDate,
+            DateTime endDate,
+            IEnumerable<string> domains)
+        {
+            var from = new DateTimeOffset(DateTime.SpecifyKind(startDate, DateTimeKind.Utc));
+            var to = new DateTimeOffset(DateTime.SpecifyKind(endDate, DateTimeKind.Utc));
+            var items = new List<PushNotificationDashboardKpiItemModel>
+            {
+                new PushNotificationDashboardKpiItemModel
+                {
+                    Domain = "newsletters.acme.com",
+                    Found = true,
+                    PushStats = new PushNotificationDashboardKpiStatsModel
+                    {
+                        Sent = 18450,
+                        Delivered = 17210,
+                        TotalClicks = 1328,
+                        Subscribed = 214,
+                        Unsubscribed = 37,
+                        CurrentSubscribers = 4986
+                    }
+                },
+                new PushNotificationDashboardKpiItemModel
+                {
+                    Domain = "shop.acme.com",
+                    Found = true,
+                    PushStats = new PushNotificationDashboardKpiStatsModel
+                    {
+                        Sent = 9620,
+                        Delivered = 9054,
+                        TotalClicks = 874,
+                        Subscribed = 126,
+                        Unsubscribed = 18,
+                        CurrentSubscribers = 3124
+                    }
+                },
+                new PushNotificationDashboardKpiItemModel
+                {
+                    Domain = "blog.acme.com",
+                    Found = true,
+                    PushStats = new PushNotificationDashboardKpiStatsModel
+                    {
+                        Sent = 4310,
+                        Delivered = 3978,
+                        TotalClicks = 291,
+                        Subscribed = 48,
+                        Unsubscribed = 9,
+                        CurrentSubscribers = 1187
+                    }
+                }
+            };
+            var totals = new PushNotificationDashboardKpiStatsModel
+            {
+                Sent = items.Sum(x => x.PushStats.Sent),
+                Delivered = items.Sum(x => x.PushStats.Delivered),
+                TotalClicks = items.Sum(x => x.PushStats.TotalClicks),
+                Subscribed = items.Sum(x => x.PushStats.Subscribed),
+                Unsubscribed = items.Sum(x => x.PushStats.Unsubscribed),
+                CurrentSubscribers = items.Sum(x => x.PushStats.CurrentSubscribers)
+            };
+
+            IEnumerable<PushNotificationDashboardKpiDataModel> response = new[]
+            {
+                new PushNotificationDashboardKpiDataModel
+                {
+                    From = from,
+                    To = to,
+                    Items = items,
+                    Totals = totals
+                }
+            };
+
+            return Task.FromResult(response);
         }
 
     }

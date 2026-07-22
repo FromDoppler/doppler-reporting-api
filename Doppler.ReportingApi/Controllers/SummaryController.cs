@@ -1,6 +1,7 @@
 using Doppler.ReportingApi.DopplerSecurity;
 using Doppler.ReportingApi.Infrastructure;
 using Doppler.ReportingApi.Models;
+using Doppler.ReportingApi.Services.PushContact;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -17,13 +18,16 @@ namespace Doppler.ReportingApi.Controllers
     {
         private readonly ILogger _logger;
         private readonly ISummaryRepository _summaryRepository;
+        private readonly IPushContactService _pushContactService;
 
         public SummaryController(
             ILogger<SummaryController> logger,
-            ISummaryRepository summaryRepository)
+            ISummaryRepository summaryRepository,
+            IPushContactService pushContactService)
         {
             _logger = logger;
             _summaryRepository = summaryRepository;
+            _pushContactService = pushContactService;
         }
 
         /// <summary>
@@ -194,6 +198,33 @@ namespace Doppler.ReportingApi.Controllers
         }
 
         #endregion Website Activity
+
+        #region Other Channels
+
+        [HttpGet]
+        [Route("{accountName}/dashboard/other-channels/notificationpush")]
+        [ProducesResponseType(typeof(IEnumerable<PushNotificationDashboardKpiDataModel>), 200)]
+        [Produces("application/json")]
+        [Authorize(Policies.OWN_RESOURCE_OR_SUPERUSER)]
+        public async Task<IActionResult> GetPushNotificationDashboardKpiData(
+            string accountName,
+            [FromQuery] BasicDateFilter dateFilter,
+            [FromQuery] IEnumerable<string> domains)
+        {
+            if (!dateFilter.StartDate.HasValue || !dateFilter.EndDate.HasValue)
+            {
+                return new BadRequestObjectResult("StartDate and EndDate are required fields");
+            }
+
+            var startDate = dateFilter.StartDate.Value.UtcDateTime;
+            var endDate = dateFilter.EndDate.Value.UtcDateTime;
+
+            var result = await _pushContactService.GetPushNotificationDashboardKpiData(accountName, startDate, endDate, domains);
+
+            return new OkObjectResult(result);
+        }
+
+        #endregion Other Channels
 
         #endregion Home Dashboard
 
