@@ -85,7 +85,7 @@ namespace Doppler.ReportingApi.Services.PushContact
             }
         }
 
-        public Task<IEnumerable<PushNotificationDashboardKpiDataModel>> GetPushNotificationDashboardKpiData(
+        public Task<PushNotificationDashboardKpiDataModel> GetPushNotificationDashboardKpiData(
             string accountName,
             DateTime startDate,
             DateTime endDate,
@@ -148,15 +148,12 @@ namespace Doppler.ReportingApi.Services.PushContact
                 CurrentSubscribers = items.Sum(x => x.PushStats.CurrentSubscribers)
             };
 
-            IEnumerable<PushNotificationDashboardKpiDataModel> response = new[]
+            var response = new PushNotificationDashboardKpiDataModel
             {
-                new PushNotificationDashboardKpiDataModel
-                {
-                    From = from,
-                    To = to,
-                    Items = items,
-                    Totals = totals
-                }
+                From = from,
+                To = to,
+                Items = items,
+                Totals = totals
             };
 
             return Task.FromResult(response);

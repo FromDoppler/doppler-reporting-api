@@ -203,7 +203,7 @@ namespace Doppler.ReportingApi.Controllers
 
         [HttpGet]
         [Route("{accountName}/dashboard/other-channels/notificationpush")]
-        [ProducesResponseType(typeof(IEnumerable<PushNotificationDashboardKpiDataModel>), 200)]
+        [ProducesResponseType(typeof(PushNotificationDashboardKpiDataModel), 200)]
         [Produces("application/json")]
         [Authorize(Policies.OWN_RESOURCE_OR_SUPERUSER)]
         public async Task<IActionResult> GetPushNotificationDashboardKpiData(

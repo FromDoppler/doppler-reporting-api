@@ -12,7 +12,7 @@ namespace Doppler.ReportingApi.Services.PushContact
             DateTime startDate,
             DateTime endDate);
 
-        Task<IEnumerable<PushNotificationDashboardKpiDataModel>> GetPushNotificationDashboardKpiData(
+        Task<PushNotificationDashboardKpiDataModel> GetPushNotificationDashboardKpiData(
             string accountName,
             DateTime startDate,
             DateTime endDate,
