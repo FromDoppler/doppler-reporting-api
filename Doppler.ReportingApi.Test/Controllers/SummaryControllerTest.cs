@@ -284,6 +284,89 @@ namespace Doppler.ReportingApi.Controllers
             Assert.True(json.RootElement.GetProperty("integrationName").ValueKind == JsonValueKind.Null);
         }
 
+        [Fact]
+        public async Task Get_push_notification_dashboard_kpi_data_should_return_valid_response()
+        {
+            // Arrange
+            var userName = "test1@test.com";
+            var token = TestJwtTokenFactory.ValidAccount123Test1;
+            var mockConnection = new Mock<DbConnection>();
+            var mockPushContactService = new Mock<IPushContactService>();
+
+            mockPushContactService
+                .Setup(x => x.GetPushNotificationDashboardKpiData(
+                    It.IsAny<DateTime>(),
+                    It.IsAny<DateTime>(),
+                    It.Is<IEnumerable<string>>(domains => domains.SequenceEqual(new[]
+                    {
+                        "alpha-demo.example.test",
+                        "beta-lab.example.test"
+                    }))))
+                .ReturnsAsync(new PushNotificationDashboardKpiDataModel
+                {
+                    From = new DateTimeOffset(2026, 6, 23, 14, 38, 18, 67, TimeSpan.Zero),
+                    To = new DateTimeOffset(2026, 7, 23, 14, 38, 18, 67, TimeSpan.Zero),
+                    Items = new List<PushNotificationDashboardKpiItemModel>
+                    {
+                        new PushNotificationDashboardKpiItemModel
+                        {
+                            Domain = "alpha-demo.example.test",
+                            Found = true,
+                            PushStats = new PushNotificationDashboardKpiStatsModel
+                            {
+                                CurrentSubscribers = 43
+                            }
+                        }
+                    },
+                    Totals = new PushNotificationDashboardKpiStatsModel
+                    {
+                        CurrentSubscribers = 43
+                    }
+                });
+
+            var client = CreateClient(mockConnection, mockPushContactService);
+
+            // Act
+            var response = await client.SendAsync(new HttpRequestMessage(
+                HttpMethod.Get,
+                $"/{userName}/dashboard/other-channels/notificationpush?startDate=2026-06-23T14:38:18.067Z&endDate=2026-07-23T14:38:18.067Z&domains=alpha-demo.example.test&domains=beta-lab.example.test")
+            {
+                Headers = { { "Authorization", $"Bearer {token}" } }
+            });
+            var content = await response.Content.ReadAsStringAsync();
+            var json = JsonDocument.Parse(content);
+
+            // Assert
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal(43, json.RootElement.GetProperty("totals").GetProperty("currentSubscribers").GetInt32());
+        }
+
+        [Fact]
+        public async Task Get_push_notification_dashboard_kpi_data_should_return_bad_request_when_domains_are_missing()
+        {
+            // Arrange
+            var userName = "test1@test.com";
+            var token = TestJwtTokenFactory.ValidAccount123Test1;
+            var mockConnection = new Mock<DbConnection>();
+            var mockPushContactService = new Mock<IPushContactService>();
+
+            var client = CreateClient(mockConnection, mockPushContactService);
+
+            // Act
+            var response = await client.SendAsync(new HttpRequestMessage(
+                HttpMethod.Get,
+                $"/{userName}/dashboard/other-channels/notificationpush?startDate=2026-06-23T14:38:18.067Z&endDate=2026-07-23T14:38:18.067Z")
+            {
+                Headers = { { "Authorization", $"Bearer {token}" } }
+            });
+
+            // Assert
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            mockPushContactService.Verify(
+                x => x.GetPushNotificationDashboardKpiData(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<IEnumerable<string>>()),
+                Times.Never);
+        }
+
         private HttpClient CreateClient(
             Mock<DbConnection> mockConnection,
             Mock<IPushContactService> mockPushContactService = null)
