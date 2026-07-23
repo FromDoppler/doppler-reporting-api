@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Doppler.ReportingApi.Models;
@@ -85,78 +85,62 @@ namespace Doppler.ReportingApi.Services.PushContact
             }
         }
 
-        public Task<PushNotificationDashboardKpiDataModel> GetPushNotificationDashboardKpiData(
-            string accountName,
+        public async Task<PushNotificationDashboardKpiDataModel> GetPushNotificationDashboardKpiData(
             DateTime startDate,
             DateTime endDate,
             IEnumerable<string> domains)
         {
-            var from = startDate;
-            var to = endDate;
-            var items = new List<PushNotificationDashboardKpiItemModel>
+            var token = _superUserTokenService.GenerateToken();
+            var payload = new
             {
-                new PushNotificationDashboardKpiItemModel
+                domains = domains ?? Array.Empty<string>(),
+                from = startDate,
+                to = endDate
+            };
+
+            using var request = new HttpRequestMessage(
+                HttpMethod.Post,
+                $"{_pushContactApiBaseUrl.TrimEnd('/')}/domains/push-stats");
+
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            request.Content = new StringContent(
+                JsonSerializer.Serialize(payload),
+                Encoding.UTF8,
+                "application/json");
+
+            HttpResponseMessage response;
+            try
+            {
+                response = await _httpClient.SendAsync(request);
+            }
+            catch (HttpRequestException exception)
+            {
+                throw new PushContactApiCommunicationException("An error occurred while calling PushContact API.", exception);
+            }
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new PushContactApiException(response.StatusCode, responseContent);
+            }
+
+            try
+            {
+                var model = JsonSerializer.Deserialize<PushNotificationDashboardKpiDataModel>(responseContent, JsonSerializerOptions);
+
+                if (model == null)
                 {
-                    Domain = "newsletters.acme.com",
-                    Found = true,
-                    PushStats = new PushNotificationDashboardKpiStatsModel
-                    {
-                        Sent = 18450,
-                        Delivered = 17210,
-                        TotalClicks = 1328,
-                        Subscribed = 214,
-                        Unsubscribed = 37,
-                        CurrentSubscribers = 4986
-                    }
-                },
-                new PushNotificationDashboardKpiItemModel
-                {
-                    Domain = "shop.acme.com",
-                    Found = true,
-                    PushStats = new PushNotificationDashboardKpiStatsModel
-                    {
-                        Sent = 9620,
-                        Delivered = 9054,
-                        TotalClicks = 874,
-                        Subscribed = 126,
-                        Unsubscribed = 18,
-                        CurrentSubscribers = 3124
-                    }
-                },
-                new PushNotificationDashboardKpiItemModel
-                {
-                    Domain = "blog.acme.com",
-                    Found = true,
-                    PushStats = new PushNotificationDashboardKpiStatsModel
-                    {
-                        Sent = 4310,
-                        Delivered = 3978,
-                        TotalClicks = 291,
-                        Subscribed = 48,
-                        Unsubscribed = 9,
-                        CurrentSubscribers = 1187
-                    }
+                    throw new PushContactApiCommunicationException("PushContact API returned an empty response body.");
                 }
-            };
-            var totals = new PushNotificationDashboardKpiStatsModel
-            {
-                Sent = items.Sum(x => x.PushStats.Sent),
-                Delivered = items.Sum(x => x.PushStats.Delivered),
-                TotalClicks = items.Sum(x => x.PushStats.TotalClicks),
-                Subscribed = items.Sum(x => x.PushStats.Subscribed),
-                Unsubscribed = items.Sum(x => x.PushStats.Unsubscribed),
-                CurrentSubscribers = items.Sum(x => x.PushStats.CurrentSubscribers)
-            };
 
-            var response = new PushNotificationDashboardKpiDataModel
+                return model;
+            }
+            catch (JsonException exception)
             {
-                From = from,
-                To = to,
-                Items = items,
-                Totals = totals
-            };
-
-            return Task.FromResult(response);
+                throw new PushContactApiCommunicationException("PushContact API returned an invalid response body.", exception);
+            }
         }
 
     }

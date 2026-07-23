@@ -207,7 +207,6 @@ namespace Doppler.ReportingApi.Controllers
         [Produces("application/json")]
         [Authorize(Policies.OWN_RESOURCE_OR_SUPERUSER)]
         public async Task<IActionResult> GetPushNotificationDashboardKpiData(
-            string accountName,
             [FromQuery] BasicDateFilter dateFilter,
             [FromQuery] IEnumerable<string> domains)
         {
@@ -216,10 +215,19 @@ namespace Doppler.ReportingApi.Controllers
                 return new BadRequestObjectResult("StartDate and EndDate are required fields");
             }
 
+            var requestedDomains = domains?
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .ToArray();
+
+            if (requestedDomains == null || requestedDomains.Length == 0)
+            {
+                return new BadRequestObjectResult("Domains is a required field");
+            }
+
             var startDate = dateFilter.StartDate.Value.UtcDateTime;
             var endDate = dateFilter.EndDate.Value.UtcDateTime;
 
-            var result = await _pushContactService.GetPushNotificationDashboardKpiData(accountName, startDate, endDate, domains);
+            var result = await _pushContactService.GetPushNotificationDashboardKpiData(startDate, endDate, requestedDomains);
 
             return new OkObjectResult(result);
         }

@@ -26,13 +26,11 @@ namespace Doppler.ReportingApi.Services.PushContact
         }
 
         public Task<PushNotificationDashboardKpiDataModel> GetPushNotificationDashboardKpiData(
-            string accountName,
             DateTime startDate,
             DateTime endDate,
             IEnumerable<string> domains)
         {
             return _pushContactSdk.GetPushNotificationDashboardKpiData(
-                accountName,
                 startDate,
                 endDate,
                 domains);
