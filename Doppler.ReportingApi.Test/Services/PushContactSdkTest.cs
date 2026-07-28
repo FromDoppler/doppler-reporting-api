@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
+using Doppler.ReportingApi.Models;
 using Doppler.ReportingApi.Services.PushContact;
 using Doppler.ReportingApi.Services.SuperUserToken;
 using Microsoft.Extensions.Configuration;
@@ -123,6 +125,61 @@ namespace Doppler.ReportingApi.Test.Services
 
             // Assert
             Assert.Equal(HttpStatusCode.NotFound, exception.StatusCode);
+        }
+
+        [Fact]
+        public async Task GetPushNotificationDashboardKpiData_should_send_post_payload_token_and_deserialize_response()
+        {
+            // Arrange
+            var superUserTokenService = new Mock<ISuperUserTokenService>();
+            superUserTokenService.Setup(x => x.GenerateToken()).Returns("super-user-token");
+
+            var handler = new StubHttpMessageHandler(async request =>
+            {
+                Assert.Equal(HttpMethod.Post, request.Method);
+                Assert.Equal("Bearer", request.Headers.Authorization.Scheme);
+                Assert.Equal("super-user-token", request.Headers.Authorization.Parameter);
+                Assert.Equal(
+                    "https://push.example.com/doppler-push-contact/domains/push-stats",
+                    request.RequestUri.ToString());
+
+                var body = await request.Content.ReadAsStringAsync();
+                var json = JsonDocument.Parse(body);
+                Assert.Equal("alpha-demo.example.test", json.RootElement.GetProperty("domains")[0].GetString());
+                Assert.Equal("beta-lab.example.test", json.RootElement.GetProperty("domains")[1].GetString());
+                Assert.Equal(new DateTimeOffset(2026, 6, 23, 14, 38, 18, 67, TimeSpan.Zero), json.RootElement.GetProperty("from").GetDateTimeOffset());
+                Assert.Equal(new DateTimeOffset(2026, 7, 23, 14, 38, 18, 67, TimeSpan.Zero), json.RootElement.GetProperty("to").GetDateTimeOffset());
+
+                var response = new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent("{\"from\":\"2026-06-23T14:38:18.067+00:00\",\"to\":\"2026-07-23T14:38:18.067+00:00\",\"items\":[{\"domain\":\"alpha-demo.example.test\",\"found\":true,\"pushStats\":{\"sent\":0,\"delivered\":0,\"totalClicks\":0,\"subscribed\":3,\"unsubscribed\":0,\"currentSubscribers\":43}}],\"totals\":{\"sent\":0,\"delivered\":0,\"totalClicks\":0,\"subscribed\":3,\"unsubscribed\":0,\"currentSubscribers\":43}}")
+                };
+
+                return response;
+            });
+
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>
+                {
+                    { "BASEURL_PUSH_CONTACT", "https://push.example.com/doppler-push-contact" }
+                })
+                .Build();
+            var sdk = new PushContactSdk(new HttpClient(handler), configuration, superUserTokenService.Object);
+
+            // Act
+            var response = await sdk.GetPushNotificationDashboardKpiData(
+                new DateTime(2026, 6, 23, 14, 38, 18, 67, DateTimeKind.Utc),
+                new DateTime(2026, 7, 23, 14, 38, 18, 67, DateTimeKind.Utc),
+                new[] { "alpha-demo.example.test", "beta-lab.example.test" });
+
+            // Assert
+            Assert.Equal(new DateTimeOffset(2026, 6, 23, 14, 38, 18, 67, TimeSpan.Zero), response.From);
+            Assert.Equal(new DateTimeOffset(2026, 7, 23, 14, 38, 18, 67, TimeSpan.Zero), response.To);
+            Assert.Single(response.Items);
+            Assert.Equal("alpha-demo.example.test", response.Items[0].Domain);
+            Assert.True(response.Items[0].Found);
+            Assert.Equal(43, response.Totals.CurrentSubscribers);
+            superUserTokenService.Verify(x => x.GenerateToken(), Times.Once);
         }
 
         private class StubHttpMessageHandler : HttpMessageHandler

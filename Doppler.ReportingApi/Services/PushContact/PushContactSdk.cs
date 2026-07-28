@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Doppler.ReportingApi.Models;
@@ -69,6 +71,64 @@ namespace Doppler.ReportingApi.Services.PushContact
             try
             {
                 var model = JsonSerializer.Deserialize<DomainStatsPerDayModel>(responseContent, JsonSerializerOptions);
+
+                if (model == null)
+                {
+                    throw new PushContactApiCommunicationException("PushContact API returned an empty response body.");
+                }
+
+                return model;
+            }
+            catch (JsonException exception)
+            {
+                throw new PushContactApiCommunicationException("PushContact API returned an invalid response body.", exception);
+            }
+        }
+
+        public async Task<PushNotificationDashboardKpiDataModel> GetPushNotificationDashboardKpiData(
+            DateTime startDate,
+            DateTime endDate,
+            IEnumerable<string> domains)
+        {
+            var token = _superUserTokenService.GenerateToken();
+            var payload = new
+            {
+                domains = domains ?? Array.Empty<string>(),
+                from = startDate,
+                to = endDate
+            };
+
+            using var request = new HttpRequestMessage(
+                HttpMethod.Post,
+                $"{_pushContactApiBaseUrl.TrimEnd('/')}/domains/push-stats");
+
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            request.Content = new StringContent(
+                JsonSerializer.Serialize(payload),
+                Encoding.UTF8,
+                "application/json");
+
+            HttpResponseMessage response;
+            try
+            {
+                response = await _httpClient.SendAsync(request);
+            }
+            catch (HttpRequestException exception)
+            {
+                throw new PushContactApiCommunicationException("An error occurred while calling PushContact API.", exception);
+            }
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new PushContactApiException(response.StatusCode, responseContent);
+            }
+
+            try
+            {
+                var model = JsonSerializer.Deserialize<PushNotificationDashboardKpiDataModel>(responseContent, JsonSerializerOptions);
 
                 if (model == null)
                 {

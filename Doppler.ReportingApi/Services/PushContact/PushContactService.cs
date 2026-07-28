@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Doppler.ReportingApi.Models;
 
@@ -22,6 +23,17 @@ namespace Doppler.ReportingApi.Services.PushContact
                 name,
                 startDate,
                 endDate);
+        }
+
+        public Task<PushNotificationDashboardKpiDataModel> GetPushNotificationDashboardKpiData(
+            DateTime startDate,
+            DateTime endDate,
+            IEnumerable<string> domains)
+        {
+            return _pushContactSdk.GetPushNotificationDashboardKpiData(
+                startDate,
+                endDate,
+                domains);
         }
     }
 }
